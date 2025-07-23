@@ -34,58 +34,8 @@ echo '<!DOCTYPE html>
     <title>Relatório de Extintores - [Nome da Empresa]</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .header img {
-            max-width: 200px; /* Ajuste o tamanho conforme necessário */
-            height: auto;
-        }
-        .table thead th {
-            background-color: #004c97;
-            color: white;
-            text-align: center;
-        }
-        .table tbody tr:nth-child(odd) {
-            background-color: #f2f2f2;
-        }
-        .table tbody tr:nth-child(even) {
-            background-color: #e6e6e6;
-        }
-        .table tbody tr:hover {
-            background-color: #ffcc00;
-        }
-        .text-center {
-            text-align: center;
-        }
-        .proximo-vencimento {
-            background-color: #FFFF00; /* Amarelo */
-        }
-        .vencido {
-            background-color: #FF0000; /* Vermelho */
-            color: white;
-        }
-        .mb-10{
-          margin-bottom: 30px;
-        }
-        .footer {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            background-color: #f8f9fa;
-            text-align: center;
-            padding: 10px;
-            font-size: 0.8em;
-        }
-    </style>
 </head>
-<body>
+<body class="export-page">
     <div class="container mt-3">
         <div class="header">
             <img src="https://th.bing.com/th/id/R.ef057f57dcc9d793dba44afa229d81bb?rik=xhl9Y3NNxQmgQA&pid=ImgRaw&r=0" alt="Logo da Empresa">
