@@ -2,8 +2,10 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require '../vendor/autoload.php';
-include '../config/db_conexao.php';
+// Carrega o autoloader do Composer.
+// O diretório `vendor` é criado após a instalação do PHPMailer.
+require 'vendor/autoload.php';
+include 'config/db_conexao.php';
 session_start();
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
