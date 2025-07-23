@@ -46,15 +46,18 @@ define('DB_NAME', getenv('DB_NAME'));
 ## Dependências opcionais
 
 Para envio de e-mails a aplicação utiliza o pacote
-[PHPMailer](https://github.com/PHPMailer/PHPMailer). Instale-o com o
-Composer:
+[PHPMailer](https://github.com/PHPMailer/PHPMailer). Caso ainda não
+tenha o diretório `vendor` configurado, siga os passos abaixo a partir
+do diretório raiz do projeto:
 
-```bash
-composer require phpmailer/phpmailer
-```
+1. Instale as dependências com o Composer:
 
-Isso irá criar o diretório `vendor` com o `autoload.php` usado em
-`enviar_alertas.php`.
+   ```bash
+   composer require phpmailer/phpmailer
+   ```
+
+2. Após a execução do comando acima o diretório `vendor` será criado com
+   o `autoload.php` utilizado em `enviar_alertas.php`.
 
 ## Executar localmente
 
