@@ -46,25 +46,9 @@ if ($result->num_rows > 0) {
         <meta charset='UTF-8'>
         <meta name='viewport' content='width=device-width, initial-scale=1.0'>
         <title>Histórico de Manutenções de Extintores</title>
-        <style>
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin: 20px 0;
-            }
-            table, th, td {
-                border: 1px solid black;
-            }
-            th, td {
-                padding: 10px;
-                text-align: left;
-            }
-            th {
-                background-color: #f2f2f2;
-            }
-        </style>
+        <link rel='stylesheet' href='styles.css'>
     </head>
-    <body>
+    <body class='export-page'>
         <h2>Histórico de Manutenções de Extintores</h2>
         <table>
             <thead>
@@ -119,36 +103,9 @@ if ($result->num_rows > 0) {
         <meta charset='UTF-8'>
         <meta name='viewport' content='width=device-width, initial-scale=1.0'>
         <title>Histórico de Manutenções - Nenhum Registro Encontrado</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                background-color: #f0f0f0;
-                text-align: center;
-                margin-top: 50px;
-            }
-            .message-box {
-                background-color: #fff;
-                border-radius: 10px;
-                padding: 30px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                display: inline-block;
-            }
-            h2 {
-                color: #333;
-            }
-            p {
-                color: #666;
-            }
-            a {
-                display: inline-block;
-                margin-top: 20px;
-                text-decoration: none;
-                color: #27509b;
-                font-weight: bold;
-            }
-        </style>
+        <link rel='stylesheet' href='styles.css'>
     </head>
-    <body>
+    <body class='export-page no-data'>
         <div class='message-box'>
             <h2>Nenhum Registro Encontrado</h2>
             <p>Não foram encontrados registros de manutenção para exportação de acordo com os critérios selecionados.</p>

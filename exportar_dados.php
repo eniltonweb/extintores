@@ -34,30 +34,8 @@ echo '<!DOCTYPE html>
     <title>Exportação de Extintores</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .table thead th {
-            background-color: #004c97;
-            color: white;
-        }
-        .table tbody tr:nth-child(odd) {
-            background-color: #f2f2f2;
-        }
-        .table tbody tr:nth-child(even) {
-            background-color: #e6e6e6;
-        }
-        .table tbody tr:hover {
-            background-color: #ffcc00;
-        }
-        h2 {
-            color: #004c97;
-            margin-bottom: 20px;
-        }
-    </style>
 </head>
-<body>
+<body class="export-page">
     <div class="container mt-5">
         <h2 class="text-center">Listagem de Extintores</h2>
         <table class="table table-bordered">

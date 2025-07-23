@@ -96,5 +96,3 @@ if (!isset($_SESSION['nome_usuario'])){
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-<?php
-?>

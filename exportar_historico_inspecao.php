@@ -57,27 +57,8 @@ $html = '<!DOCTYPE html>
     <title>Relatório de Histórico de inspeções</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .table th {
-            background-color: #0056b3;
-            color: white;
-        }
-        .table tbody tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        .header-img {
-            width: 300px;
-            height: auto;
-        }
-        h2 {
-            color: #0056b3;
-        }
-    </style>
 </head>
-<body>
+<body class="export-page">
     <div class="container mt-5">
         <div class="text-center mb-4">
             <img src="http://www.enilton.com.br/img/michelin_logo2.png" alt="Michelin Logo" class="header-img">
