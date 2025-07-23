@@ -63,6 +63,7 @@ $html = '<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Inspeções com Não Conformidade</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <style>
         body {
             background-color: #f8f9fa;

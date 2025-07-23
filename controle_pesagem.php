@@ -15,6 +15,7 @@ if (!isset($_SESSION['nome_usuario'])){
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Controle de Pesagem Extintores CO₂</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 

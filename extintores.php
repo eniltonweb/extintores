@@ -53,116 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Liberação de Manutenções</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <link rel="manifest" href="../manifest.json">
-    <style>
-      .container {
-            max-width: 800px;
-            margin: 50px auto;
-            background-color: #fff;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-        h1, h2 {
-            text-align: center;
-            color: #333;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-        label {
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        input, button {
-            margin-top: 5px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        button {
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            margin-top: 20px;
-            padding: 15px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 20px;
-            color: #777;
-        }
-        .message {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 18px;
-            color: green;
-        }
-        .warning {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 18px;
-            color: red;
-        }
-		 body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #ffffff;
-            color: #1b1e21;
-        }
-        .navbar {
-            background: linear-gradient(45deg, #001f3f, #27509b);
-            border-bottom: 3px solid #fce500;
-        }
-        .navbar-brand {
-            font-size: 1.5rem;
-            color: #fce500 !important;
-        }
-        .nav-link {
-            color: #ffffff !important;
-            transition: color 0.3s ease-in-out, transform 0.3s ease-in-out;
-        }
-        .nav-link:hover {
-            color: #fce500 !important;
-            transform: scale(1.1);
-        }
-        .navbar-toggler {
-            border-color: #fce500;
-        }
-        .navbar-toggler-icon {
-            background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%25255, 229, 0, 0.7%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
-        }
-        .dropdown-menu {
-            background-color: #27509b;
-            border: none;
-        }
-        .dropdown-item {
-            color: #ffffff;
-            transition: background-color 0.3s ease-in-out;
-        }
-        .dropdown-item:hover {
-            background-color: #fce500;
-            color: #000000;
-        }
-        .nav-item {
-            margin-right: 10px;
-        }
-        .navbar-nav.ml-auto {
-            margin-left: auto;
-        }
-        .navbar-collapse {
-            flex-grow: 1;
-            justify-content: space-between;
-        }
-    </style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark">
