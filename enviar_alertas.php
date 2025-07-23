@@ -50,6 +50,7 @@ $conn->close();
 <html>
 <head>
     <title>Envio de Alertas</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <h2>Envio de Alertas por Email</h2>
