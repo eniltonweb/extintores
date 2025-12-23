@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../config/db_conexao.php';
+require_once __DIR__ . '/config/db_conexao.php';
 include 'auditoria.php'; // Certifique-se de que este arquivo existe e tem a função auditoria
 
 // Verificar se o usuário está logado e se tem permissão para acessar esta página

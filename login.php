@@ -2,7 +2,7 @@
 session_start();
 session_regenerate_id(true);
 
-include '../config/db_conexao.php';
+require_once __DIR__ . '/config/db_conexao.php';
 
 // Gerar token CSRF
 $csrf_token = bin2hex(random_bytes(32));

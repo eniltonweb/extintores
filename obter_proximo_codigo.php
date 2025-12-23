@@ -1,5 +1,5 @@
 <?php
-include '../config/db_conexao.php';
+require_once __DIR__ . '/config/db_conexao.php';
 
 $predio = filter_input(INPUT_GET, 'predio', FILTER_SANITIZE_STRING);
 

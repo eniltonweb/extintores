@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../config/db_conexao.php';
+require_once __DIR__ . '/config/db_conexao.php';
 
 // Habilitar exibição de erros para depuração
 ini_set('display_errors', 1);
