@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../config/db_conexao.php';
+require_once __DIR__ . '/config/db_conexao.php';
 
 // Verificar se o usuário está logado
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_level'], ['admin', 'fornecedor'])) {

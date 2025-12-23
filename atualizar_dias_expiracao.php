@@ -1,5 +1,5 @@
 <?php
-include '../config/db_conexao.php'; // Inclua seu arquivo de conexão com o banco de dados
+require_once __DIR__ . '/config/db_conexao.php'; // Inclua seu arquivo de conexão com o banco de dados
 
 if ($conn) {
     // Atualizar automaticamente a coluna 'dias_para_expirar_n2' com base na 'proxima_manutencao_n2'

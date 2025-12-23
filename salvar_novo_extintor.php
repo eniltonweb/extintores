@@ -5,7 +5,7 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 session_start();
-include '../config/db_conexao.php';
+require_once __DIR__ . '/config/db_conexao.php';
 include 'auditoria.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'bombeiro') {

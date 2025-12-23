@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../config/db_conexao.php';
+require_once __DIR__ . '/config/db_conexao.php';
 
 // Configurações de segurança da sessão
 ini_set('session.cookie_httponly', 1);

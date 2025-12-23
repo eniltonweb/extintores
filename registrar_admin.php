@@ -3,7 +3,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-include '../config/db_conexao.php';
+require_once __DIR__ . '/config/db_conexao.php';
 
 $username = 'admin';
 $password = password_hash('admin_password', PASSWORD_DEFAULT);

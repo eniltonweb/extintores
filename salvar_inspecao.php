@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-include '../config/db_conexao.php';
+require_once __DIR__ . '/config/db_conexao.php';
 include 'auditoria.php'; // Incluindo o arquivo que contém a função auditoria
 
 

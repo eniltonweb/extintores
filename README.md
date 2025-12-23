@@ -35,7 +35,7 @@ Este repositório contém uma aplicação web em PHP destinada ao controle compl
    ```bash
    mysql -u <usuario> -p <nome_do_banco> < config/eniltonbd.sql
    ```
-3. Configure a conexão do banco editando `config/db_conexao.php` ou definindo as variáveis de ambiente `DB_HOST`, `DB_USER`, `DB_PASS` e `DB_NAME`.
+3. Configure a conexão do banco definindo as variáveis de ambiente `DB_HOST`, `DB_USER`, `DB_PASS` e `DB_NAME`. Para desenvolvimento local você pode ajustar os valores padrão em `config/db_conexao.php`, mas **não** versione credenciais reais.
 4. Instale as dependências (diretório `vendor`) caso utilize o envio de e-mails:
    ```bash
    composer install
