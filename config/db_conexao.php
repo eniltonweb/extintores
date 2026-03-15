@@ -9,12 +9,12 @@ $dbUser = getenv('DB_USER') ?: 'usuario';
 $dbPass = getenv('DB_PASS') ?: '';
 $dbName = getenv('DB_NAME') ?: 'extintores';
 
-$conn = @new mysqli($dbHost, $dbUser, $dbPass, $dbName);
-
-if ($conn->connect_error) {
-    error_log('Erro de conexão com o banco: ' . $conn->connect_error);
+try {
+    $conn = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+    $conn->set_charset('utf8');
+} catch (mysqli_sql_exception $e) {
+    error_log('Erro de conexão com o banco: ' . $e->getMessage());
     http_response_code(500);
     exit('Não foi possível conectar ao banco de dados.');
 }
 
-$conn->set_charset('utf8');

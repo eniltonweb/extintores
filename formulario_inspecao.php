@@ -8,8 +8,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'bombeiro') {
     exit();
 }
 
-$predio = filter_input(INPUT_GET, 'predio', FILTER_SANITIZE_STRING);
-$codigo = filter_input(INPUT_GET, 'codigo', FILTER_SANITIZE_STRING);
+$predio = filter_input(INPUT_GET, 'predio', FILTER_SANITIZE_SPECIAL_CHARS);
+$codigo = filter_input(INPUT_GET, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
 $show_form = false;
 
 if ($codigo) {
