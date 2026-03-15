@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("db_conexao.php");
+require_once __DIR__ . "/config/db_conexao.php";
 
 // Verificação de usuário logado
 if (!isset($_SESSION['nome_usuario'])){
@@ -41,8 +41,8 @@ if (!isset($_SESSION['nome_usuario'])){
       <label>Selecione o Extintor</label>
       <select name="id_extintor" class="form-control" required>
         <?php
-          $resultado = mysqli_query($conn, "SELECT id, codigo FROM bd_extintores WHERE tip_extintor='CO2'");
-          while($linha = mysqli_fetch_assoc($resultado)){
+          $resultado = $conn->query("SELECT id, codigo FROM bd_extintores WHERE tip_extintor='CO2'");
+          while($linha = $resultado->fetch_assoc()){
             echo "<option value='{$linha['id']}'>{$linha['codigo']}</option>";
           }
         ?>
@@ -74,8 +74,8 @@ if (!isset($_SESSION['nome_usuario'])){
     </thead>
     <tbody>
       <?php
-      $pesagens = mysqli_query($conn, "SELECT p.*, e.codigo FROM pesagens_extintores p INNER JOIN bd_extintores e ON p.id_extintor = e.id ORDER BY p.data_pesagem DESC");
-      while($pesagem = mysqli_fetch_assoc($pesagens)){
+      $pesagens = $conn->query("SELECT p.*, e.codigo FROM pesagens_extintores p INNER JOIN bd_extintores e ON p.id_extintor = e.id ORDER BY p.data_pesagem DESC");
+      while($pesagem = $pesagens->fetch_assoc()){
         $situacao = $pesagem['situacao'] == 'Aprovado' ? '✅ OK' : '❌ NOK';
         echo "<tr>
           <td>{$pesagem['codigo']}</td>

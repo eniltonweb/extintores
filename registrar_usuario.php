@@ -1,6 +1,12 @@
 <?php
 session_start();
 require_once __DIR__ . '/config/db_conexao.php';
+// Gerar token CSRF
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
+
 include 'auditoria.php'; // Certifique-se de que este arquivo existe e tem a função auditoria
 
 // Verificar se o usuário está logado e se tem permissão para acessar esta página
@@ -12,6 +18,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Verificar token CSRF
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die('Erro CSRF detectado.');
+    }
+
     $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $user_level = filter_input(INPUT_POST, 'user_level', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -132,6 +143,8 @@ $conn->close();
     <?php endif; ?>
 
     <form method="POST" action="registrar_usuario.php">
+        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+
         <div class="form-group">
             <label for="username">Usuário:</label>
             <input type="text" class="form-control" id="username" name="username" required>
