@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
 }
 
 if (isset($_GET['codigo'])) {
-    $codigo_extintor = filter_input(INPUT_GET, 'codigo', FILTER_SANITIZE_STRING);
+    $codigo_extintor = filter_input(INPUT_GET, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
 
     // Buscar o id do extintor
     $sql_buscar_id = "SELECT id FROM bd_extintores WHERE codigo = ?";
