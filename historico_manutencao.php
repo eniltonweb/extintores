@@ -7,6 +7,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
     exit();
 }
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
+
 if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $extintor_codigo = isset($_GET['extintor_codigo']) ? $_GET['extintor_codigo'] : '';
     $predio = isset($_GET['predio']) ? $_GET['predio'] : '';
@@ -170,6 +175,7 @@ $conn->close();
     </form>
 
     <form method="POST" action="limpar_historico.php" onsubmit="return confirm('Tem certeza que deseja limpar todo o histórico? Esta ação não pode ser desfeita.');">
+        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
         <button type="submit" class="btn btn-danger mb-4">Limpar Histórico</button>
     </form>
 		<a href="exportar_historico_manutencao.php?cobertura=all" class="btn btn-primary mb-4">Exportar Todos</a>
