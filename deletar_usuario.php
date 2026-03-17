@@ -9,13 +9,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
-    // Verificar token CSRF
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die('Erro CSRF detectado.');
+        header('Location: registrar_usuario.php?message=Erro:+Token+CSRF+inválido.');
+        exit();
     }
 
-    $id = intval($_POST['id']);
+    if (isset($_POST['id'])) {
+        $id = intval($_POST['id']);
 
     // Obter o nome do usuário antes de deletar
     $sql_user = "SELECT username FROM usuarios WHERE id = ?";
@@ -69,8 +70,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
     }
 
     $stmt_user->close();
+    } else {
+        echo "ID do usuário não fornecido.";
+    }
 } else {
-    echo "Requisição inválida ou ID do usuário não fornecido.";
+    header('Location: registrar_usuario.php');
+    exit();
 }
 
 $conn->close();

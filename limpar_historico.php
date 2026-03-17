@@ -8,15 +8,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    die("Acesso inválido.");
+    header('Location: historico_manutencao.php');
+    exit();
 }
 
-if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-    die("Erro CSRF detectado.");
+if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    header('Location: historico_manutencao.php?message=Erro:+Token+CSRF+inválido.');
+    exit();
 }
-
-require_once __DIR__ . '/config/db_conexao.php';
-include 'auditoria.php';
 
 // Limpar os campos de manutenção na tabela bd_extintores
 $sql = "

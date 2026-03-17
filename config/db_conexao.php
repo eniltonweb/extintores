@@ -18,3 +18,14 @@ try {
     exit('Não foi possível conectar ao banco de dados.');
 }
 
+$conn->set_charset('utf8');
+
+// Garantir que a sessão esteja iniciada para o token CSRF
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Gerar token CSRF se não existir
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
