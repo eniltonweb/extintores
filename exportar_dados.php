@@ -1,13 +1,4 @@
 <?php
-require_once __DIR__ . '/config/db_conexao.php';
-session_start();
-
-// Verificar se o usuário está logado e se tem permissão para acessar esta página
-if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
-    header('Location: index.php');
-    exit();
-}
-
 // Registrar a exportação no log de auditoria
 function registrar_auditoria($conn, $user_id, $action, $details) {
     $sql = "INSERT INTO auditoria_logs (user_id, action, detalhes) VALUES (?, ?, ?)";
@@ -16,6 +7,19 @@ function registrar_auditoria($conn, $user_id, $action, $details) {
     $stmt->execute();
     $stmt->close();
 }
+
+// Verificar se o script está sendo executado diretamente e não incluído
+if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === realpath(__FILE__)) {
+    require_once __DIR__ . '/config/db_conexao.php';
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    // Verificar se o usuário está logado e se tem permissão para acessar esta página
+    if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
+        header('Location: index.php');
+        exit();
+    }
 
 // Nome do arquivo com data de exportação
 $data_exportacao = date('Y-m-d_H-i-s');
@@ -88,12 +92,13 @@ echo '        </tbody>
 </body>
 </html>';
 
-// Registrar a auditoria
-$user_id = $_SESSION['user_id'];
-$action = 'Exportação de dados';
-$details = 'Exportação de dados dos extintores realizada em ' . date('Y-m-d H:i:s');
-registrar_auditoria($conn, $user_id, $action, $details);
+    // Registrar a auditoria
+    $user_id = $_SESSION['user_id'];
+    $action = 'Exportação de dados';
+    $details = 'Exportação de dados dos extintores realizada em ' . date('Y-m-d H:i:s');
+    registrar_auditoria($conn, $user_id, $action, $details);
 
-$conn->close();
-exit();
+    $conn->close();
+    exit();
+}
 ?>
