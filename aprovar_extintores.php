@@ -71,16 +71,16 @@ $result_extintores = $conn->query($sql_extintores);
                     <td><?php echo htmlspecialchars($row['tip_extintor']); ?></td>
                     <td><?php echo htmlspecialchars($row['carga']); ?></td>
                     <td>
-                        <form method="POST" action="aprovar_extintor.php" style="display:inline;">
-                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <form action="aprovar_extintor.php" method="POST" style="display:inline;">
                             <input type="hidden" name="codigo" value="<?php echo htmlspecialchars($row['codigo']); ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                             <button type="submit" class="btn btn-success">Aprovar</button>
                         </form>
                     </td>
                     <td>
-                        <form method="POST" action="rejeitar_extintor.php" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja rejeitar este extintor?');">
-                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <form action="rejeitar_extintor.php" method="POST" style="display:inline;">
                             <input type="hidden" name="codigo" value="<?php echo htmlspecialchars($row['codigo']); ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                             <button type="submit" class="btn btn-danger">Rejeitar</button>
                         </form>
                     </td>

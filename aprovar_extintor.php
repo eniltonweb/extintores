@@ -8,15 +8,19 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
     exit();
 }
 
-// Verificar o token CSRF e o código do extintor
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        header('Location: aprovar_extintores.php?message=Erro:+Token+CSRF+inválido.');
-        exit();
-    }
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: aprovar_extintores.php?message=Erro:+Método+inválido.');
+    exit();
+}
 
-    if (isset($_POST['codigo'])) {
-        $codigo = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
+if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+    header('Location: aprovar_extintores.php?message=Erro:+Falha+na+validação+de+segurança.');
+    exit();
+}
+
+// Verificar se o código do extintor foi passado
+if (isset($_POST['codigo'])) {
+    $codigo = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
 
     // Atualizar o status do extintor para "Aprovado"
     $sql_aprovar = "UPDATE bd_extintores SET status_aprovacao = 'Aprovado' WHERE codigo = ?";
