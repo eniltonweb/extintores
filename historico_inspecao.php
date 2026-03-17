@@ -202,6 +202,7 @@ $conn->close();
                 const tableBody = document.querySelector('table tbody');
                 tableBody.innerHTML = '';
 
+                const fragment = document.createDocumentFragment();
                 inspecoes.forEach(row => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -212,8 +213,9 @@ $conn->close();
                         <td>${row.atualizacao}</td>
                         <td>${row.comentario}</td>
                     `;
-                    tableBody.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                tableBody.appendChild(fragment);
 
                 updateChart(inspecoesPorData);
             })
