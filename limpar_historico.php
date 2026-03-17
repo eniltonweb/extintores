@@ -9,6 +9,16 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: historico_manutencao.php');
+    exit();
+}
+
+if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    header('Location: historico_manutencao.php?message=Erro:+Token+CSRF+inválido.');
+    exit();
+}
+
 // Limpar os campos de manutenção na tabela bd_extintores
 $sql = "
     UPDATE bd_extintores

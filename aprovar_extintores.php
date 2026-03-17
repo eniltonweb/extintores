@@ -70,8 +70,20 @@ $result_extintores = $conn->query($sql_extintores);
                     <td><?php echo htmlspecialchars($row['Local_Exato']); ?></td>
                     <td><?php echo htmlspecialchars($row['tip_extintor']); ?></td>
                     <td><?php echo htmlspecialchars($row['carga']); ?></td>
-                    <td><a href="aprovar_extintor.php?codigo=<?php echo urlencode($row['codigo']); ?>" class="btn btn-success">Aprovar</a></td>
-                    <td><a href="rejeitar_extintor.php?codigo=<?php echo urlencode($row['codigo']); ?>" class="btn btn-danger">Rejeitar</a></td>
+                    <td>
+                        <form method="POST" action="aprovar_extintor.php" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                            <input type="hidden" name="codigo" value="<?php echo htmlspecialchars($row['codigo']); ?>">
+                            <button type="submit" class="btn btn-success">Aprovar</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="POST" action="rejeitar_extintor.php" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja rejeitar este extintor?');">
+                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                            <input type="hidden" name="codigo" value="<?php echo htmlspecialchars($row['codigo']); ?>">
+                            <button type="submit" class="btn btn-danger">Rejeitar</button>
+                        </form>
+                    </td>
                 </tr>
             <?php endwhile; ?>
         </tbody>

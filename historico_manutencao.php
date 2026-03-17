@@ -170,6 +170,7 @@ $conn->close();
     </form>
 
     <form method="POST" action="limpar_historico.php" onsubmit="return confirm('Tem certeza que deseja limpar todo o histórico? Esta ação não pode ser desfeita.');">
+        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
         <button type="submit" class="btn btn-danger mb-4">Limpar Histórico</button>
     </form>
 		<a href="exportar_historico_manutencao.php?cobertura=all" class="btn btn-primary mb-4">Exportar Todos</a>
