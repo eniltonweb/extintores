@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'fornecedor') {
 }
 
 // Capturar dados do formulário
-$codigo = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_STRING);
+$codigo = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
 $cobertura = isset($_POST['cobertura']) && $_POST['cobertura'] == '1' ? 1 : 0;
 $manutencao_n2 = isset($_POST['manutencao_n2']) && $_POST['manutencao_n2'] == '1' ? 1 : 0;
 

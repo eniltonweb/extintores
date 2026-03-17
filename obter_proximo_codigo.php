@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/config/db_conexao.php';
 
-$predio = filter_input(INPUT_GET, 'predio', FILTER_SANITIZE_STRING);
+$predio = filter_input(INPUT_GET, 'predio', FILTER_SANITIZE_SPECIAL_CHARS);
 
 if ($predio) {
     // Obter o último código do prédio especificado

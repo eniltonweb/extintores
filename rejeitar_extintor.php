@@ -7,8 +7,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
     exit();
 }
 
-if (isset($_GET['codigo'])) {
-    $codigo_extintor = filter_input(INPUT_GET, 'codigo', FILTER_SANITIZE_STRING);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        header('Location: aprovar_extintores.php?message=Erro:+Token+CSRF+inválido.');
+        exit();
+    }
+
+    if (isset($_POST['codigo'])) {
+        $codigo_extintor = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_STRING);
 
     // Buscar o id do extintor
     $sql_buscar_id = "SELECT id FROM bd_extintores WHERE codigo = ?";
@@ -41,14 +47,19 @@ if (isset($_GET['codigo'])) {
             header('Location: aprovar_extintores.php?message=Erro:+Não+foi+possível+remover+o+extintor.');
             exit();
         }
+        } else {
+            // Redirecionar com mensagem de erro se o extintor não for encontrado
+            header('Location: aprovar_extintores.php?message=Erro:+Extintor+não+encontrado.');
+            exit();
+        }
     } else {
-        // Redirecionar com mensagem de erro se o extintor não for encontrado
-        header('Location: aprovar_extintores.php?message=Erro:+Extintor+não+encontrado.');
+        // Redirecionar com mensagem de erro se o código não for fornecido
+        header('Location: aprovar_extintores.php?message=Erro:+Código+do+extintor+não+fornecido.');
         exit();
     }
 } else {
-    // Redirecionar com mensagem de erro se o código não for fornecido
-    header('Location: aprovar_extintores.php?message=Erro:+Código+do+extintor+não+fornecido.');
+    // Redirecionar se não for uma requisição POST
+    header('Location: aprovar_extintores.php');
     exit();
 }
 

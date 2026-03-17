@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     unset($_SESSION['csrf_token']); // Invalidar o token após o uso
 
-    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
+    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
     $password = $_POST['password'];
 
     if (empty($username) || empty($password)) {
@@ -30,29 +30,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt = $conn->prepare($sql);
 
         if (!$stmt) {
-            die("Erro na preparação da consulta: " . $conn->error); // Melhor tratamento de erro
-        }        
+            error_log("Erro na preparação da consulta de login: " . $conn->error);
+            $error = "Erro interno do servidor. Tente novamente mais tarde.";
+        } else {
+            $stmt->bind_param('s', $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
 
-        $stmt->bind_param('s', $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+            if ($result->num_rows > 0) {
+                $user = $result->fetch_assoc();
 
-        if ($result->num_rows > 0) {
-            $user = $result->fetch_assoc();
-
-            if (password_verify($password, $user['password'])) {
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_level'] = $user['nivel_acesso'];
-                $_SESSION['user_name'] = $user['username'];
-                header('Location: index.php');
-                exit();
+                if (password_verify($password, $user['password'])) {
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['user_level'] = $user['nivel_acesso'];
+                    $_SESSION['user_name'] = $user['username'];
+                    header('Location: index.php');
+                    exit();
+                } else {
+                    $error = "Credenciais inválidas.";
+                }
             } else {
                 $error = "Credenciais inválidas.";
             }
-        } else {
-            $error = "Credenciais inválidas.";
+            $stmt->close();
         }
-        $stmt->close();
     }
 }
 
