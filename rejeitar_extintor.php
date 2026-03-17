@@ -51,14 +51,19 @@ if (isset($_POST['codigo'])) {
             header('Location: aprovar_extintores.php?message=Erro:+Não+foi+possível+remover+o+extintor.');
             exit();
         }
+        } else {
+            // Redirecionar com mensagem de erro se o extintor não for encontrado
+            header('Location: aprovar_extintores.php?message=Erro:+Extintor+não+encontrado.');
+            exit();
+        }
     } else {
-        // Redirecionar com mensagem de erro se o extintor não for encontrado
-        header('Location: aprovar_extintores.php?message=Erro:+Extintor+não+encontrado.');
+        // Redirecionar com mensagem de erro se o código não for fornecido
+        header('Location: aprovar_extintores.php?message=Erro:+Código+do+extintor+não+fornecido.');
         exit();
     }
 } else {
-    // Redirecionar com mensagem de erro se o código não for fornecido
-    header('Location: aprovar_extintores.php?message=Erro:+Código+do+extintor+não+fornecido.');
+    // Redirecionar se não for uma requisição POST
+    header('Location: aprovar_extintores.php');
     exit();
 }
 

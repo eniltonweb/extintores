@@ -91,6 +91,7 @@ $conn->close();
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="js/chart_utils.js"></script>
 
 </head>
 <body>
@@ -202,6 +203,7 @@ $conn->close();
                 const tableBody = document.querySelector('table tbody');
                 tableBody.innerHTML = '';
 
+                const fragment = document.createDocumentFragment();
                 inspecoes.forEach(row => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -212,8 +214,9 @@ $conn->close();
                         <td>${row.atualizacao}</td>
                         <td>${row.comentario}</td>
                     `;
-                    tableBody.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                tableBody.appendChild(fragment);
 
                 updateChart(inspecoesPorData);
             })
@@ -221,52 +224,8 @@ $conn->close();
     }
 
     function updateChart(inspecoesPorData) {
-     const ctx = document.getElementById('inspecaoChart').getContext('2d');
-     const labels = Object.keys(inspecoesPorData);
-     const data = Object.values(inspecoesPorData);
-
-     // Verificar se já existe um gráfico e se ele é uma instância do Chart
-     if (window.inspecaoChart && typeof window.inspecaoChart.destroy === 'function') {
-         window.inspecaoChart.destroy();
-     }
-
-     // Criar um novo gráfico
-     window.inspecaoChart = new Chart(ctx, {
-         type: 'line',
-         data: {
-             labels: labels,
-             datasets: [{
-                 label: 'Número de Inspeções',
-                 data: data,
-                 borderColor: 'rgba(75, 192, 192, 1)',
-                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                 borderWidth: 1
-             }]
-         },
-         options: {
-             scales: {
-                 x: {
-                     type: 'time',
-                     time: {
-                         unit: 'day',
-                         tooltipFormat: 'dd/MM/yyyy', // Formato de data para o tooltip
-                     },
-                     title: {
-                         display: true,
-                         text: 'Data'
-                     }
-                 },
-                 y: {
-                     beginAtZero: true,
-                     title: {
-                         display: true,
-                         text: 'Quantidade'
-                     }
-                 }
-             }
-         }
-     });
- }
+        updateLineChart('inspecaoChart', 'inspecaoChart', inspecoesPorData, 'Número de Inspeções', 'dd/MM/yyyy');
+    }
 </script>
 </body>
 </html>

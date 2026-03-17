@@ -42,14 +42,19 @@ if (isset($_POST['codigo'])) {
             exit();
         }
         $stmt_aprovar->close();
+        } else {
+            // Redirecionar com mensagem de erro caso o statement não possa ser criado
+            header('Location: aprovar_extintores.php?message=Erro:+Não+foi+possível+preparar+o+statement+para+aprovação+do+extintor.');
+            exit();
+        }
     } else {
-        // Redirecionar com mensagem de erro caso o statement não possa ser criado
-        header('Location: aprovar_extintores.php?message=Erro:+Não+foi+possível+preparar+o+statement+para+aprovação+do+extintor.');
+        // Redirecionar caso o código do extintor não seja passado
+        header('Location: aprovar_extintores.php?message=Erro:+Código+do+extintor+não+encontrado.');
         exit();
     }
 } else {
-    // Redirecionar caso o código do extintor não seja passado
-    header('Location: aprovar_extintores.php?message=Erro:+Código+do+extintor+não+encontrado.');
+    // Redirecionar se não for uma requisição POST
+    header('Location: aprovar_extintores.php');
     exit();
 }
 

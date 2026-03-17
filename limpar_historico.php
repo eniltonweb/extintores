@@ -1,11 +1,19 @@
 <?php
 session_start();
-require_once __DIR__ . '/config/db_conexao.php';
-include 'auditoria.php';
 
-// Verificar se o usuário está logado e se tem permissão para acessar esta página
+// Validations before including db connection so that we don't have to connect to DB to reject invalid requests
 if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
     header('Location: index.php');
+    exit();
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: historico_manutencao.php');
+    exit();
+}
+
+if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    header('Location: historico_manutencao.php?message=Erro:+Token+CSRF+inválido.');
     exit();
 }
 
