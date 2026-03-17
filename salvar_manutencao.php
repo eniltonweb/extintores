@@ -15,7 +15,8 @@ $manutencao_n2 = isset($_POST['manutencao_n2']) && $_POST['manutencao_n2'] == '1
 
 // Garantir que o código não esteja vazio
 if (empty($codigo)) {
-    die("Erro: Código do extintor não especificado.");
+    header('Location: formulario_manutencao.php?message=' . urlencode('Erro: Código do extintor não especificado.'));
+    exit();
 }
 
 // Capturar o nome do usuário logado a partir da sessão
@@ -23,7 +24,8 @@ $username = $_SESSION['user_name'] ?? null;
 
 // Verificar se o username foi recuperado corretamente
 if (empty($username)) {
-    die("Erro ao capturar o usuário logado.");
+    header('Location: formulario_manutencao.php?message=' . urlencode('Erro ao capturar o usuário logado.'));
+    exit();
 }
 
 // Variável para armazenar mensagens de sucesso ou erro
@@ -43,20 +45,22 @@ if ($manutencao_n2) {
 
     // Verificar se a preparação da consulta foi bem-sucedida
     if ($stmt_manutencao === false) {
-        die("Erro ao preparar consulta para atualizar manutenção: " . $conn->error);
-    }
-
-    $stmt_manutencao->bind_param("sssis", $data_manutencao_n2, $data_proxima_manutencao_n2, $username, $cobertura, $codigo);
-
-    // Executar e verificar se a consulta foi bem-sucedida
-    if ($stmt_manutencao->execute()) {
-        // Sucesso ao salvar
-        $message .= "Manutenção e próxima manutenção registradas com sucesso!";
+        error_log("Erro ao preparar consulta para atualizar manutenção: " . $conn->error);
+        $message .= " Erro interno ao atualizar a manutenção.";
     } else {
-        // Erro ao salvar
-        $message .= "Erro ao atualizar a manutenção: " . $stmt_manutencao->error;
+        $stmt_manutencao->bind_param("sssis", $data_manutencao_n2, $data_proxima_manutencao_n2, $username, $cobertura, $codigo);
+
+        // Executar e verificar se a consulta foi bem-sucedida
+        if ($stmt_manutencao->execute()) {
+            // Sucesso ao salvar
+            $message .= " Manutenção e próxima manutenção registradas com sucesso!";
+        } else {
+            // Erro ao salvar
+            error_log("Erro ao atualizar a manutenção: " . $stmt_manutencao->error);
+            $message .= " Erro interno ao atualizar a manutenção.";
+        }
+        $stmt_manutencao->close();
     }
-    $stmt_manutencao->close();
 } 
 
 // Se o checkbox de cobertura foi marcado, atualizar apenas a cobertura
@@ -69,20 +73,22 @@ if (!$manutencao_n2 && $cobertura) {
 
     // Verificar se a preparação da consulta foi bem-sucedida
     if ($stmt_cobertura === false) {
-        die("Erro ao preparar consulta para atualizar cobertura: " . $conn->error);
-    }
-
-    $stmt_cobertura->bind_param("iss", $cobertura, $username, $codigo);
-
-    // Executar e verificar se a consulta foi bem-sucedida
-    if ($stmt_cobertura->execute()) {
-        // Sucesso ao salvar
-        $message .= " Cobertura atualizada com sucesso!";
+        error_log("Erro ao preparar consulta para atualizar cobertura: " . $conn->error);
+        $message .= " Erro interno ao atualizar a cobertura.";
     } else {
-        // Erro ao salvar
-        $message .= " Erro ao atualizar a cobertura: " . $stmt_cobertura->error;
+        $stmt_cobertura->bind_param("iss", $cobertura, $username, $codigo);
+
+        // Executar e verificar se a consulta foi bem-sucedida
+        if ($stmt_cobertura->execute()) {
+            // Sucesso ao salvar
+            $message .= " Cobertura atualizada com sucesso!";
+        } else {
+            // Erro ao salvar
+            error_log("Erro ao atualizar a cobertura: " . $stmt_cobertura->error);
+            $message .= " Erro interno ao atualizar a cobertura.";
+        }
+        $stmt_cobertura->close();
     }
-    $stmt_cobertura->close();
 }
 
 // Atualizar automaticamente os dias para expirar apenas do extintor específico
@@ -92,24 +98,26 @@ $sql_update_dias = "UPDATE bd_extintores
 $stmt_dias = $conn->prepare($sql_update_dias);
 
 if ($stmt_dias === false) {
-    die("Erro ao preparar consulta para atualizar dias para expirar: " . $conn->error);
-}
-
-$stmt_dias->bind_param("s", $codigo);
-
-if ($stmt_dias->execute()) {
-    // Sucesso ao atualizar os dias
-    $message .= " Dias para expirar atualizados com sucesso!";
+    error_log("Erro ao preparar consulta para atualizar dias para expirar: " . $conn->error);
+    $message .= " Erro interno ao atualizar os dias para expirar.";
 } else {
-    // Erro ao atualizar os dias
-    $message .= " Erro ao atualizar os dias para expirar: " . $stmt_dias->error;
+    $stmt_dias->bind_param("s", $codigo);
+
+    if ($stmt_dias->execute()) {
+        // Sucesso ao atualizar os dias
+        $message .= " Dias para expirar atualizados com sucesso!";
+    } else {
+        // Erro ao atualizar os dias
+        error_log("Erro ao atualizar os dias para expirar: " . $stmt_dias->error);
+        $message .= " Erro interno ao atualizar os dias para expirar.";
+    }
+    $stmt_dias->close();
 }
-$stmt_dias->close();
 
 // Fechar a conexão
 $conn->close();
 
 // Redirecionar para a página anterior com uma mensagem
-header("Location: formulario_manutencao.php?message=" . urlencode($message));
+header("Location: formulario_manutencao.php?message=" . urlencode(trim($message)));
 exit();
 ?>
