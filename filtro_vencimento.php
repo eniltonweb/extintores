@@ -25,8 +25,8 @@ if ($conn->query($sql_update) === FALSE) {
 // Filtrar os extintores com base nos dias para expirar
 if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $dias = filter_input(INPUT_GET, 'dias', FILTER_SANITIZE_NUMBER_INT) ?: 30; // Filtrar os dias, valor padrão: 30
-    $sort_column = filter_input(INPUT_GET, 'sort', FILTER_SANITIZE_STRING) ?: 'codigo';
-    $sort_order = filter_input(INPUT_GET, 'order', FILTER_SANITIZE_STRING) ?: 'ASC';
+    $sort_column = filter_input(INPUT_GET, 'sort', FILTER_SANITIZE_SPECIAL_CHARS) ?: 'codigo';
+    $sort_order = filter_input(INPUT_GET, 'order', FILTER_SANITIZE_SPECIAL_CHARS) ?: 'ASC';
 
     // Validar colunas permitidas para ordenação
     $valid_columns = ['codigo', 'Predio', 'dias_para_expirar_n2'];

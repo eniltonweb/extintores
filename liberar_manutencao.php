@@ -1,6 +1,12 @@
 <?php
 session_start();
 require_once __DIR__ . '/config/db_conexao.php';
+// Gerar token CSRF
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
+
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
     header('Location: login.php');
@@ -8,6 +14,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Verificar token CSRF
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die('Erro CSRF detectado.');
+    }
+
     $action = $_POST['action'];
     $tipo_liberacao = $_POST['tipo_liberacao'];
     $liberar_para = $_POST['liberar_para'];
@@ -166,6 +177,8 @@ $conn->close();
     <?php endif; ?>
 
     <form method="POST" action="liberar_manutencao.php">
+        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+
         <div class="form-group">
             <label for="liberar_para">Liberar para:</label>
             <select id="liberar_para" name="liberar_para" class="form-control" required>

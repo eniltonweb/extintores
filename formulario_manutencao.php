@@ -17,8 +17,8 @@ $sql_liberados_manutencao = "
 ";
 $result_liberados_manutencao = $conn->query($sql_liberados_manutencao);
 
-$codigo = filter_input(INPUT_GET, 'codigo', FILTER_SANITIZE_STRING);
-$predio_selecionado = filter_input(INPUT_GET, 'predio', FILTER_SANITIZE_STRING);
+$codigo = filter_input(INPUT_GET, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
+$predio_selecionado = filter_input(INPUT_GET, 'predio', FILTER_SANITIZE_SPECIAL_CHARS);
 $show_form = false;
 
 if ($codigo) {

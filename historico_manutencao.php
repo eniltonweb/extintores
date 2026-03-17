@@ -7,6 +7,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
     exit();
 }
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
+
 if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $extintor_codigo = isset($_GET['extintor_codigo']) ? $_GET['extintor_codigo'] : '';
     $predio = isset($_GET['predio']) ? $_GET['predio'] : '';

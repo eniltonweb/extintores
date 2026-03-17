@@ -1,6 +1,12 @@
 <?php
 session_start();
 require_once __DIR__ . '/config/db_conexao.php';
+// Gerar token CSRF
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
+
 include 'auditoria.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
@@ -9,6 +15,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Verificar token CSRF
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die('Erro CSRF detectado.');
+    }
+
     if (isset($_POST['delete_selected'])) {
         if (!empty($_POST['logs'])) {
             // Evitar excluir o log que registra a ação de apagar todos os logs
@@ -121,6 +132,8 @@ $conn->close();
     <?php endif; ?>
 
     <form method="POST" action="auditoria_logs.php">
+        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+
         <table class="table table-striped table-bordered">
             <thead class="thead-dark">
                 <tr>

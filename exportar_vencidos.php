@@ -61,6 +61,7 @@ $html = '<!DOCTYPE html>
                 <tbody>';
 
 // Iterar sobre os resultados da consulta e preencher o HTML
+$linhas_html = [];
 while ($row = $result->fetch_assoc()) {
     // Garantir que valores nulos sejam substituídos por strings vazias
     foreach ($row as $key => $value) {
@@ -76,14 +77,15 @@ while ($row = $result->fetch_assoc()) {
     $row = array_map('htmlspecialchars', $row);
 
     // Gerar as linhas da tabela
-    $html .= '<tr>
-                <td>' . $row['codigo'] . '</td>
-                <td>' . $row['Predio'] . '</td>
-                <td>' . $row['Local_Exato'] . '</td>
-                <td>' . $row['proxima_manutencao_n2'] . '</td>
-                <td>' . $row['dias_para_expirar_n2'] . '</td>
-            </tr>';
+    $linhas_html[] = "<tr>
+                <td>{$row['codigo']}</td>
+                <td>{$row['Predio']}</td>
+                <td>{$row['Local_Exato']}</td>
+                <td>{$row['proxima_manutencao_n2']}</td>
+                <td>{$row['dias_para_expirar_n2']}</td>
+            </tr>";
 }
+$html .= implode('', $linhas_html);
 
 // Fechar o HTML
 $html .= '</tbody>
