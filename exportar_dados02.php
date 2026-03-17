@@ -1,20 +1,12 @@
 <?php
 require_once __DIR__ . '/config/db_conexao.php';
 session_start();
+include 'auditoria.php';
 
 // Verificar se o usuário está logado e se tem permissão
 if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
     header('Location: index.php');
     exit();
-}
-
-// Registrar a exportação no log de auditoria
-function registrar_auditoria($conn, $user_id, $action, $details) {
-    $sql = "INSERT INTO auditoria_logs (user_id, action, detalhes) VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('iss', $user_id, $action, $details);
-    $stmt->execute();
-    $stmt->close();
 }
 
 // Nome do arquivo com data de exportação
@@ -132,7 +124,7 @@ echo '<div class="footer">
 $user_id = $_SESSION['user_id'];
 $action = 'Exportação de dados';
 $details = 'Exportação de dados dos extintores realizada em ' . date('Y-m-d H:i:s');
-registrar_auditoria($conn, $user_id, $action, $details);
+auditoria($action, null, $user_id, $_SESSION['user_level'], $details);
 
 $conn->close();
 exit();

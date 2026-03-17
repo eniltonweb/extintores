@@ -1,20 +1,12 @@
 <?php
 session_start();
 require_once __DIR__ . '/config/db_conexao.php';
+include 'auditoria.php';
 
 // Verificar se o usuário está logado e se tem permissão para acessar esta página
 if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
     header('Location: index.php');
     exit();
-}
-
-// Registrar a exportação no log de auditoria
-function registrar_auditoria($conn, $user_id, $action, $details) {
-    $sql = "INSERT INTO auditoria_logs (user_id, action, detalhes) VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('iss', $user_id, $action, $details);
-    $stmt->execute();
-    $stmt->close();
 }
 
 header('Content-Type: text/html; charset=utf-8');
@@ -131,7 +123,7 @@ echo $html;
 $user_id = $_SESSION['user_id'];
 $action = 'Exportação de inspeções não conforme';
 $details = 'Exportação inspeções não conforme realizada em ' . date('Y-m-d H:i:s');
-registrar_auditoria($conn, $user_id, $action, $details);
+auditoria($action, null, $user_id, $_SESSION['user_level'], $details);
 
 $conn->close();
 exit();
