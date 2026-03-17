@@ -41,9 +41,27 @@ if (!isset($_SESSION['nome_usuario'])){
       <label>Selecione o Extintor</label>
       <select name="id_extintor" class="form-control" required>
         <?php
-          $resultado = $conn->query("SELECT id, codigo FROM bd_extintores WHERE tip_extintor='CO2'");
-          while($linha = $resultado->fetch_assoc()){
-            echo "<option value='{$linha['id']}'>{$linha['codigo']}</option>";
+          $cacheDir = __DIR__ . '/cache';
+          $cacheFile = $cacheDir . '/co2_extintores_options.html';
+          $cacheTime = 3600; // 1 hour cache
+
+          if (!is_dir($cacheDir)) {
+              mkdir($cacheDir, 0755, true);
+          }
+
+          if (file_exists($cacheFile) && (time() - filemtime($cacheFile) < $cacheTime)) {
+            echo file_get_contents($cacheFile);
+          } else {
+            $resultado = $conn->query("SELECT id, codigo FROM bd_extintores WHERE tip_extintor='CO2'");
+            $options = [];
+            if ($resultado) {
+              while($linha = $resultado->fetch_assoc()){
+                $options[] = "<option value='{$linha['id']}'>{$linha['codigo']}</option>";
+              }
+            }
+            $html = implode('', $options);
+            file_put_contents($cacheFile, $html);
+            echo $html;
           }
         ?>
       </select>
