@@ -199,6 +199,7 @@ $conn->close();
                 tableBody.innerHTML = '';
 
                 if (usuarios.length > 0) {
+                    const fragment = document.createDocumentFragment();
                     usuarios.forEach(row => {
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
@@ -213,8 +214,9 @@ $conn->close();
                                 <a href="resetar_senha.php?id=${row.id}" class="btn btn-warning btn-sm">Resetar Senha</a>
                             </td>
                         `;
-                        tableBody.appendChild(tr);
+                        fragment.appendChild(tr);
                     });
+                    tableBody.appendChild(fragment);
                 } else {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `<td colspan="3" class="text-center">Nenhum usuário encontrado.</td>`;
@@ -248,7 +250,9 @@ $conn->close();
         });
 
         tableBody.innerHTML = '';
-        sortedRows.forEach(row => tableBody.appendChild(row));
+        const fragment = document.createDocumentFragment();
+        sortedRows.forEach(row => fragment.appendChild(row));
+        tableBody.appendChild(fragment);
     }
 </script>
 </body>
