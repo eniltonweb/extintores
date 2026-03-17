@@ -95,6 +95,7 @@ $conn->close();
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="js/chart_utils.js"></script>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark">
@@ -245,48 +246,7 @@ $conn->close();
     }
 
     function updateChart(manutencoesPorData) {
-        const ctx = document.getElementById('manutencaoChart').getContext('2d');
-        const labels = Object.keys(manutencoesPorData);
-        const data = Object.values(manutencoesPorData);
-
-        if (window.manutencaoChart && typeof window.manutencaoChart.destroy === 'function') {
-            window.manutencaoChart.destroy();
-        }
-
-        window.manutencaoChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Número de Manutenções',
-                    data: data,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'day'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Data'
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Quantidade'
-                        }
-                    }
-                }
-            }
-        });
+        updateLineChart('manutencaoChart', 'manutencaoChart', manutencoesPorData, 'Número de Manutenções');
     }
 </script>
 </body>
