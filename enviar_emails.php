@@ -1,10 +1,9 @@
 <?php
-function enviarEmail($para, $assunto, $mensagem) {
+function enviarEmail($para, $assunto, $mensagem, $mail_func = 'mail') {
     $headers = 'From: no-reply@enilton.com.br' . "\r\n" .
                'Reply-To: no-reply@enilton.com.br' . "\r\n" .
                'X-Mailer: PHP/' . phpversion();
-
-    mail($para, $assunto, $mensagem, $headers);
+    return $mail_func($para, $assunto, $mensagem, $headers);
 }
 
 // Exemplo de uso
