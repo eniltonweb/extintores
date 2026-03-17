@@ -44,7 +44,7 @@ if ($result->num_rows > 0) {
                 // Limpa todos os destinatários após o envio para o próximo loop
                 $mail->clearAddresses();
             } catch (Exception $e) {
-                echo "A mensagem para " . $row['codigo'] . " não pôde ser enviada. Erro: {$mail->ErrorInfo}<br>";
+                echo "A mensagem não pôde ser enviada. Erro: {$mail->ErrorInfo}";
                 // Limpa destinatários em caso de erro para evitar acumular
                 $mail->clearAddresses();
             }
