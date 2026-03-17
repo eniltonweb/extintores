@@ -205,7 +205,11 @@ $conn->close();
                             <td>${row.username}</td>
                             <td>${row.nivel_acesso}</td>
                             <td>
-                                <a href="deletar_usuario.php?id=${row.id}" class="btn btn-danger btn-sm">Remover</a>
+                                <form method="POST" action="deletar_usuario.php" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja remover este usuário?');">
+                                    <input type="hidden" name="id" value="${row.id}">
+                                    <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                                    <button type="submit" class="btn btn-danger btn-sm">Remover</button>
+                                </form>
                                 <a href="resetar_senha.php?id=${row.id}" class="btn btn-warning btn-sm">Resetar Senha</a>
                             </td>
                         `;
