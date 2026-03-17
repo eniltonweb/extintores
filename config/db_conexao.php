@@ -18,3 +18,7 @@ try {
     exit('Não foi possível conectar ao banco de dados.');
 }
 
+// Inicializa o token CSRF se a sessão estiver ativa
+if (session_status() === PHP_SESSION_ACTIVE && empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}

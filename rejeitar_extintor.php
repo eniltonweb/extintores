@@ -7,8 +7,18 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
     exit();
 }
 
-if (isset($_GET['codigo'])) {
-    $codigo_extintor = filter_input(INPUT_GET, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: aprovar_extintores.php?message=Erro:+Método+inválido.');
+    exit();
+}
+
+if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+    header('Location: aprovar_extintores.php?message=Erro:+Falha+na+validação+de+segurança.');
+    exit();
+}
+
+if (isset($_POST['codigo'])) {
+    $codigo_extintor = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
 
     // Buscar o id do extintor
     $sql_buscar_id = "SELECT id FROM bd_extintores WHERE codigo = ?";
