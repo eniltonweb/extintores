@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt = $conn->prepare($sql);
 
         if (!$stmt) {
+            // Log do erro no servidor e fallback amigável para o usuário
             error_log("Erro na preparação da consulta de login: " . $conn->error);
             $error = "Erro interno do servidor. Tente novamente mais tarde.";
         } else {
