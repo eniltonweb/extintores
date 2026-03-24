@@ -3,10 +3,6 @@ session_start();
 require_once __DIR__ . '/config/db_conexao.php';
 include 'auditoria.php';
 
-// Habilitar exibição de erros para depuração
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 // Configuração de charset
 $conn->set_charset("utf8mb4");
