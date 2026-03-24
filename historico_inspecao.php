@@ -2,10 +2,6 @@
 session_start();
 require_once __DIR__ . '/config/db_conexao.php';
 
-// Habilitar exibição de erros para depuração
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 // Verificar se a conexão ao banco de dados está configurada para usar a codificação correta
 $conn->set_charset("utf8");
