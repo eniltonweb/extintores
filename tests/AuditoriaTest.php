@@ -1,70 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../auditoria.php';
-
-class MockStatement {
-    public $query;
-    public $conn;
-    public $params = [];
-    public $types = '';
-    public $bound_result_vars = [];
-    public $executed = false;
-    public $closed = false;
-    public $mock_result_data = null;
-
-    public function __construct($query, $conn) {
-        $this->query = $query;
-        $this->conn = $conn;
-    }
-
-    public function bind_param($types, &...$vars) {
-        $this->types = $types;
-        $this->params = [];
-        foreach ($vars as $var) {
-            $this->params[] = $var;
-        }
-        return true;
-    }
-
-    public function execute() {
-        $this->executed = true;
-        return true;
-    }
-
-    public function bind_result(&...$vars) {
-        $this->bound_result_vars = [];
-        foreach ($vars as &$var) {
-            $this->bound_result_vars[] = &$var;
-        }
-        return true;
-    }
-
-    public function fetch() {
-        if (!empty($this->bound_result_vars) && $this->mock_result_data !== null) {
-            $this->bound_result_vars[0] = $this->mock_result_data;
-        }
-    }
-
-    public function close() {
-        $this->closed = true;
-    }
-}
-
-class MockConnection {
-    public $queries = [];
-    public $statements = [];
-    public $mock_results = [];
-
-    public function prepare($query) {
-        $this->queries[] = $query;
-        $stmt = new MockStatement($query, $this);
-        if (isset($this->mock_results[$query])) {
-            $stmt->mock_result_data = $this->mock_results[$query];
-        }
-        $this->statements[] = $stmt;
-        return $stmt;
-    }
-}
+require_once __DIR__ . '/MockDatabase.php';
 
 class AuditoriaTest extends MiniTestCase {
 

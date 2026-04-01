@@ -54,12 +54,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
+// Configuração da paginação
+$itens_por_pagina = 20;
+$pagina_atual = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($pagina_atual < 1) $pagina_atual = 1;
+$offset = ($pagina_atual - 1) * $itens_por_pagina;
+
+// Contar total de registros para a paginação
+$sql_count = "SELECT COUNT(*) AS total FROM auditoria_logs";
+$result_count = $conn->query($sql_count);
+$total_registros = $result_count->fetch_assoc()['total'];
+$total_paginas = ceil($total_registros / $itens_por_pagina);
+
 $sql = "
     SELECT al.*, u.username, e.codigo AS extintor_codigo
     FROM auditoria_logs al
     LEFT JOIN usuarios u ON al.user_id = u.id
     LEFT JOIN bd_extintores e ON al.extintor_id = e.id
     ORDER BY al.data_hora DESC
+    LIMIT $itens_por_pagina OFFSET $offset
 ";
 $result = $conn->query($sql);
 
@@ -170,6 +183,39 @@ $conn->close();
             <button type="submit" name="delete_all" class="btn btn-danger">Apagar Todos</button>
         </div>
     </form>
+
+    <nav aria-label="Navegação de página" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <?php if ($pagina_atual > 1) : ?>
+                <li class="page-item">
+                    <a class="page-link" href="?page=<?php echo $pagina_atual - 1; ?>">Anterior</a>
+                </li>
+            <?php endif; ?>
+
+            <?php
+            $range = 2;
+            for ($i = 1; $i <= $total_paginas; $i++) :
+                if ($i == 1 || $i == $total_paginas || ($i >= $pagina_atual - $range && $i <= $pagina_atual + $range)) :
+            ?>
+                    <li class="page-item <?php echo ($i == $pagina_atual) ? 'active' : ''; ?>">
+                        <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                    </li>
+            <?php
+                elseif ($i == $pagina_atual - $range - 1 || $i == $pagina_atual + $range + 1) :
+            ?>
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+            <?php
+                endif;
+            endfor;
+            ?>
+
+            <?php if ($pagina_atual < $total_paginas) : ?>
+                <li class="page-item">
+                    <a class="page-link" href="?page=<?php echo $pagina_atual + 1; ?>">Próximo</a>
+                </li>
+            <?php endif; ?>
+        </ul>
+    </nav>
 </div>
 
 <footer class="footer mt-4">
