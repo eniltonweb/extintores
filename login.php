@@ -5,21 +5,25 @@ session_regenerate_id(true);
 require_once __DIR__ . '/config/db_conexao.php';
 
 // Gerar token CSRF
-$csrf_token = bin2hex(random_bytes(32));
-$_SESSION['csrf_token'] = $csrf_token;
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
 
 $error = null; // Inicializa a variável de erro
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Verificar token CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die("Erro CSRF detectado.");
-    }
+    if (!isset($_POST['csrf_token']) || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        error_log("Erro CSRF detectado na tentativa de login.");
+        $error = "Erro de validação de segurança. Por favor, tente novamente.";
+    } else {
+        unset($_SESSION['csrf_token']); // Invalidar o token após o uso
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); // Gerar novo para próxima tentativa
+        $csrf_token = $_SESSION['csrf_token'];
 
-    unset($_SESSION['csrf_token']); // Invalidar o token após o uso
-
-    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
+        $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
     $password = $_POST['password'];
 
     if (empty($username) || empty($password)) {
@@ -56,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->close();
         }
     }
+    } // Fechamento do else do CSRF
 }
 
 $conn->close();
