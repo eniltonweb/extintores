@@ -17,23 +17,31 @@ $sql = "SELECT * FROM bd_extintores WHERE dias_para_expirar_n2 <= 30";
 $result = $conn->query($sql);
 
 if ($result->num_rows > 0) {
+    $smtpHost = getenv('SMTP_HOST') ?: 'smtp.example.com';
+    $smtpUser = getenv('SMTP_USER') ?: 'seu_email@example.com';
+    $smtpPass = getenv('SMTP_PASS') ?: 'sua_senha';
+    $smtpSecure = getenv('SMTP_SECURE') ?: 'tls';
+    $smtpPort = (int)(getenv('SMTP_PORT') ?: 587);
+    $mailFrom = getenv('MAIL_FROM') ?: 'seu_email@example.com';
+    $mailRecipient = getenv('MAIL_RECIPIENT') ?: 'destinatario@example.com';
+
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->Host = 'smtp.example.com';
+        $mail->Host = $smtpHost;
         $mail->SMTPAuth = true;
-        $mail->Username = 'seu_email@example.com';
-        $mail->Password = 'sua_senha';
-        $mail->SMTPSecure = 'tls';
-        $mail->Port = 587;
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPass;
+        $mail->SMTPSecure = $smtpSecure;
+        $mail->Port = $smtpPort;
 
-        $mail->setFrom('seu_email@example.com', 'Sistema de Manutenção');
+        $mail->setFrom($mailFrom, 'Sistema de Manutenção');
         $mail->isHTML(true);
         $mail->SMTPKeepAlive = true; // Mantém a conexão SMTP aberta para múltiplos envios
 
         while ($row = $result->fetch_assoc()) {
             try {
-                $mail->addAddress('destinatario@example.com');
+                $mail->addAddress($mailRecipient);
 
                 $mail->Subject = 'Alerta de Manutenção Pendente';
                 $mail->Body = 'O extintor com código ' . $row['codigo'] . ' está com manutenção pendente. Próxima manutenção: ' . $row['proxima_manutencao_n2'];
