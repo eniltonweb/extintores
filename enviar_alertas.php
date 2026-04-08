@@ -37,27 +37,30 @@ if ($result->num_rows > 0) {
 
         $mail->setFrom($mailFrom, 'Sistema de Manutenção');
         $mail->isHTML(true);
-        $mail->SMTPKeepAlive = true; // Mantém a conexão SMTP aberta para múltiplos envios
+
+        $mensagens = [];
+        $codigos = [];
 
         while ($row = $result->fetch_assoc()) {
+            $mensagens[] = "O extintor com código {$row['codigo']} está com manutenção pendente. Próxima manutenção: {$row['proxima_manutencao_n2']}";
+            $codigos[] = $row['codigo'];
+        }
+
+        if (!empty($mensagens)) {
             try {
                 $mail->addAddress($mailRecipient);
-
                 $mail->Subject = 'Alerta de Manutenção Pendente';
-                $mail->Body = 'O extintor com código ' . $row['codigo'] . ' está com manutenção pendente. Próxima manutenção: ' . $row['proxima_manutencao_n2'];
+                $mail->Body = implode('<br><br>', $mensagens);
 
                 $mail->send();
-                echo 'Mensagem enviada para ' . $row['codigo'] . '<br>';
 
-                // Limpa todos os destinatários após o envio para o próximo loop
-                $mail->clearAddresses();
+                foreach ($codigos as $codigo) {
+                    echo 'Mensagem enviada para ' . $codigo . '<br>';
+                }
             } catch (Exception $e) {
                 echo "A mensagem não pôde ser enviada. Erro: {$mail->ErrorInfo}";
-                // Limpa destinatários em caso de erro para evitar acumular
-                $mail->clearAddresses();
             }
         }
-        $mail->smtpClose(); // Fecha a conexão SMTP após o término do loop
     } catch (Exception $e) {
         echo "Erro ao configurar o envio de emails: {$mail->ErrorInfo}";
     }
