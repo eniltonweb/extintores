@@ -56,6 +56,7 @@ if (!isset($_SESSION['nome_usuario'])){
             $options = [];
             if ($resultado) {
               while($linha = $resultado->fetch_assoc()){
+                $linha = array_map('htmlspecialchars', $linha);
                 $options[] = "<option value='{$linha['id']}'>{$linha['codigo']}</option>";
               }
             }
@@ -94,6 +95,7 @@ if (!isset($_SESSION['nome_usuario'])){
       <?php
       $pesagens = $conn->query("SELECT p.*, e.codigo FROM pesagens_extintores p INNER JOIN bd_extintores e ON p.id_extintor = e.id ORDER BY p.data_pesagem DESC");
       while($pesagem = $pesagens->fetch_assoc()){
+        $pesagem = array_map('htmlspecialchars', $pesagem);
         $situacao = $pesagem['situacao'] == 'Aprovado' ? '✅ OK' : '❌ NOK';
         echo "<tr>
           <td>{$pesagem['codigo']}</td>
