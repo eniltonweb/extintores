@@ -16,11 +16,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Verificar token CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die('Erro CSRF detectado.');
-    }
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        error_log('Erro CSRF detectado.');
+        $message = "Erro de validação. Tente novamente.";
+    } else {
 
-    if (isset($_POST['delete_selected'])) {
+        if (isset($_POST['delete_selected'])) {
         if (!empty($_POST['logs'])) {
             // Evitar excluir o log que registra a ação de apagar todos os logs
             $sql_exclusao = "SELECT id FROM auditoria_logs WHERE detalhes = 'Todos os logs de auditoria foram apagados'";
@@ -51,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $message = "Erro ao apagar todos os logs: " . $conn->error;
         }
+    }
     }
 }
 

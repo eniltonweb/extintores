@@ -13,18 +13,19 @@ $error = null; // Inicializa a variável de erro
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Verificar token CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die("Erro CSRF detectado.");
-    }
-
-    unset($_SESSION['csrf_token']); // Invalidar o token após o uso
-
-    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
-    $password = $_POST['password'];
-
-    if (empty($username) || empty($password)) {
-        $error = "Preencha todos os campos.";
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        error_log("Erro CSRF detectado.");
+        $error = "Erro de validação. Tente novamente.";
     } else {
+
+        unset($_SESSION['csrf_token']); // Invalidar o token após o uso
+
+        $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
+        $password = $_POST['password'];
+
+        if (empty($username) || empty($password)) {
+            $error = "Preencha todos os campos.";
+        } else {
 
         $sql = "SELECT * FROM usuarios WHERE username = ?";
         $stmt = $conn->prepare($sql);
@@ -54,6 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $error = "Credenciais inválidas.";
             }
             $stmt->close();
+        }
         }
     }
 }
