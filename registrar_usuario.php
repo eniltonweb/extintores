@@ -19,42 +19,43 @@ $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Verificar token CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die('Erro CSRF detectado.');
-    }
-
-    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $user_level = filter_input(INPUT_POST, 'user_level', FILTER_SANITIZE_SPECIAL_CHARS);
-
-    // Verificar se o nome de usuário já existe
-    $sql_check = "SELECT id FROM usuarios WHERE username = ?";
-    $stmt_check = $conn->prepare($sql_check);
-    $stmt_check->bind_param("s", $username);
-    $stmt_check->execute();
-    $stmt_check->store_result();
-
-    if ($stmt_check->num_rows > 0) {
-        $message = "Nome de usuário já existe.";
+    if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        error_log('Erro CSRF detectado ao tentar registrar um novo usuário. User ID: ' . ($_SESSION['user_id'] ?? 'desconhecido'));
+        $message = "Erro na validação do formulário. Por favor, recarregue a página e tente novamente.";
     } else {
-        // Prevenir SQL Injection usando prepared statements
-        $sql = "INSERT INTO usuarios (username, password, nivel_acesso) VALUES (?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        if ($stmt === false) {
-            $message = "Erro ao preparar a consulta: " . $conn->error;
-        } else {
-            $stmt->bind_param("sss", $username, $password, $user_level);
+        $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
+        $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+        $user_level = filter_input(INPUT_POST, 'user_level', FILTER_SANITIZE_SPECIAL_CHARS);
 
-            if ($stmt->execute()) {
-                auditoria('Registro de usuário', null, $_SESSION['user_id'], $_SESSION['user_level'], 'Usuário registrado com sucesso: ' . $username);
-                $message = "Usuário registrado com sucesso.";
+        // Verificar se o nome de usuário já existe
+        $sql_check = "SELECT id FROM usuarios WHERE username = ?";
+        $stmt_check = $conn->prepare($sql_check);
+        $stmt_check->bind_param("s", $username);
+        $stmt_check->execute();
+        $stmt_check->store_result();
+
+        if ($stmt_check->num_rows > 0) {
+            $message = "Nome de usuário já existe.";
+        } else {
+            // Prevenir SQL Injection usando prepared statements
+            $sql = "INSERT INTO usuarios (username, password, nivel_acesso) VALUES (?, ?, ?)";
+            $stmt = $conn->prepare($sql);
+            if ($stmt === false) {
+                $message = "Erro ao preparar a consulta: " . $conn->error;
             } else {
-                $message = "Erro ao registrar usuário: " . $stmt->error;
+                $stmt->bind_param("sss", $username, $password, $user_level);
+
+                if ($stmt->execute()) {
+                    auditoria('Registro de usuário', null, $_SESSION['user_id'], $_SESSION['user_level'], 'Usuário registrado com sucesso: ' . $username);
+                    $message = "Usuário registrado com sucesso.";
+                } else {
+                    $message = "Erro ao registrar usuário: " . $stmt->error;
+                }
+                $stmt->close();
             }
-            $stmt->close();
         }
+        $stmt_check->close();
     }
-    $stmt_check->close();
 }
 
 // Consultar todos os usuários registrados
