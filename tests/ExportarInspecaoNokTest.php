@@ -17,8 +17,13 @@ class MockStmtExportarInspecaoNok {
         return true;
     }
 
+    public $execute_returns_false = false;
+
     public function execute() {
         $this->execute_called = true;
+        if ($this->execute_returns_false) {
+            return false;
+        }
         return true;
     }
 
@@ -30,9 +35,17 @@ class MockStmtExportarInspecaoNok {
 
 class MockConnExportarInspecaoNok {
     public $last_stmt = null;
+    public $prepare_returns_false = false;
+    public $execute_returns_false = false;
 
     public function prepare($sql) {
+        if ($this->prepare_returns_false) {
+            return false;
+        }
         $this->last_stmt = new MockStmtExportarInspecaoNok($sql);
+        if ($this->execute_returns_false) {
+            $this->last_stmt->execute_returns_false = true;
+        }
         return $this->last_stmt;
     }
 }
@@ -70,5 +83,47 @@ class ExportarInspecaoNokTest extends MiniTestCase {
         // Verify execution and close
         $this->assertTrue($conn->last_stmt->execute_called, "execute() should be called on the statement");
         $this->assertTrue($conn->last_stmt->close_called, "close() should be called on the statement");
+    }
+
+    public function testRegistrarAuditoriaFailsWhenPrepareReturnsFalse() {
+        $conn = new MockConnExportarInspecaoNok();
+        $conn->prepare_returns_false = true;
+
+        $exceptionThrown = false;
+        try {
+            registrar_auditoria($conn, 99, 'Test Action', 'Test Details');
+        } catch (\Error $e) {
+            $exceptionThrown = true;
+            // The exact error message could be "Call to a member function bind_param() on false"
+            // or "...on bool" depending on the PHP version, so we check for both.
+            $this->assertTrue(
+                strpos($e->getMessage(), 'bind_param() on false') !== false ||
+                strpos($e->getMessage(), 'bind_param() on bool') !== false,
+                "Expected error message about calling bind_param on false/bool"
+            );
+        }
+
+        $this->assertTrue($exceptionThrown, "An Error should be thrown when prepare returns false");
+    }
+
+    public function testRegistrarAuditoriaWhenExecuteReturnsFalse() {
+        $conn = new MockConnExportarInspecaoNok();
+        $conn->execute_returns_false = true;
+
+        // Function does not currently check execute() return value, so it should just proceed without throwing.
+        $exceptionThrown = false;
+        try {
+            registrar_auditoria($conn, 99, 'Test Action', 'Test Details');
+        } catch (\Exception $e) {
+            $exceptionThrown = true;
+        } catch (\Error $e) {
+            $exceptionThrown = true;
+        }
+
+        $this->assertTrue($exceptionThrown === false, "No exception should be thrown if execute() returns false");
+
+        // Still verify it was called
+        $this->assertTrue($conn->last_stmt->execute_called, "execute() should still be called");
+        $this->assertTrue($conn->last_stmt->close_called, "close() should still be called even if execute returned false");
     }
 }
