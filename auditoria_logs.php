@@ -51,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $message = "Erro ao apagar todos os logs: " . $conn->error;
         }
     }
+    }
 }
 
 // Configuração da paginação
