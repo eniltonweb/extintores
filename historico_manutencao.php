@@ -21,27 +21,44 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
 
     // Build WHERE clauses
     $where_clauses = ["bd_extintores.manutencao_n2 IS NOT NULL"];
+    $types = "";
+    $params = [];
+
     if (!empty($extintor_codigo)) {
-        $where_clauses[] = "bd_extintores.codigo LIKE '%" . $conn->real_escape_string($extintor_codigo) . "%'";
+        $where_clauses[] = "bd_extintores.codigo LIKE ?";
+        $types .= "s";
+        $params[] = "%" . $extintor_codigo . "%";
     }
     if (!empty($predio)) {
-        $where_clauses[] = "bd_extintores.Predio LIKE '%" . $conn->real_escape_string($predio) . "%'";
+        $where_clauses[] = "bd_extintores.Predio LIKE ?";
+        $types .= "s";
+        $params[] = "%" . $predio . "%";
     }
     if ($cobertura === 'SIM') {
         $where_clauses[] = "bd_extintores.cobertura = 1";
     }
     if (!empty($data_inicial)) {
-        $where_clauses[] = "bd_extintores.manutencao_n2 >= '" . $conn->real_escape_string($data_inicial) . "'";
+        $where_clauses[] = "bd_extintores.manutencao_n2 >= ?";
+        $types .= "s";
+        $params[] = $data_inicial;
     }
     if (!empty($data_final)) {
-        $where_clauses[] = "bd_extintores.manutencao_n2 <= '" . $conn->real_escape_string($data_final) . "'";
+        $where_clauses[] = "bd_extintores.manutencao_n2 <= ?";
+        $types .= "s";
+        $params[] = $data_final;
     }
     $where_sql = implode(" AND ", $where_clauses);
 
     // 1. Contar total de registros para a paginação
     $sql_count = "SELECT COUNT(*) AS total FROM bd_extintores WHERE $where_sql";
-    $result_count = $conn->query($sql_count);
+    $stmt_count = $conn->prepare($sql_count);
+    if (!empty($params)) {
+        $stmt_count->bind_param($types, ...$params);
+    }
+    $stmt_count->execute();
+    $result_count = $stmt_count->get_result();
     $total_registros = $result_count->fetch_assoc()['total'];
+    $stmt_count->close();
 
     $itens_por_pagina = 20;
     $total_paginas = ceil($total_registros / $itens_por_pagina);
@@ -58,11 +75,17 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
         GROUP BY manutencao_n2
         ORDER BY manutencao_n2 ASC
     ";
-    $result_chart = $conn->query($sql_chart);
+    $stmt_chart = $conn->prepare($sql_chart);
+    if (!empty($params)) {
+        $stmt_chart->bind_param($types, ...$params);
+    }
+    $stmt_chart->execute();
+    $result_chart = $stmt_chart->get_result();
     $manutencoes_por_data = [];
     while ($row_chart = $result_chart->fetch_assoc()) {
         $manutencoes_por_data[$row_chart['data_manutencao']] = (int)$row_chart['total'];
     }
+    $stmt_chart->close();
 
     // 3. Buscar dados paginados para a tabela
     $sql_paginated = "
@@ -81,13 +104,22 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
         WHERE 
             $where_sql
         ORDER BY bd_extintores.manutencao_n2 DESC
-        LIMIT $itens_por_pagina OFFSET $offset
+        LIMIT ? OFFSET ?
     ";
-    $result_paginated = $conn->query($sql_paginated);
+    $stmt_paginated = $conn->prepare($sql_paginated);
+    $types_paginated = $types . "ii";
+    $params_paginated = $params;
+    $params_paginated[] = $itens_por_pagina;
+    $params_paginated[] = $offset;
+    $stmt_paginated->bind_param($types_paginated, ...$params_paginated);
+    $stmt_paginated->execute();
+    $result_paginated = $stmt_paginated->get_result();
+
     $data = [];
     while ($row = $result_paginated->fetch_assoc()) {
         $data[] = $row;
     }
+    $stmt_paginated->close();
 
     header('Content-Type: application/json');
     echo json_encode([
