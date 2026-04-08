@@ -46,31 +46,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Lidar com o upload de fotos
     $foto_nome = null;
+    $upload_warning = '';
     if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
-        // Validar extensão da foto
-        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        $file_extension = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
+        try {
+            // Validar extensão da foto
+            $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $file_extension = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
 
-        if (!in_array($file_extension, $allowed_extensions)) {
-            die("Erro: Tipo de arquivo não permitido.");
-        }
+            if (!in_array($file_extension, $allowed_extensions)) {
+                throw new Exception("Tipo de arquivo não permitido.");
+            }
 
-        // Validar MIME type da foto
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mime_type = finfo_file($finfo, $foto['tmp_name']);
-        finfo_close($finfo);
+            // Validar MIME type da foto
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime_type = finfo_file($finfo, $foto['tmp_name']);
+            finfo_close($finfo);
 
-        $allowed_mime_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (!in_array($mime_type, $allowed_mime_types)) {
-            die("Erro: Tipo MIME não permitido.");
-        }
+            $allowed_mime_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!in_array($mime_type, $allowed_mime_types)) {
+                throw new Exception("Tipo MIME não permitido.");
+            }
 
-        // Gerar um nome de arquivo seguro e aleatório
-        $foto_nome = uniqid('foto_', true) . '.' . $file_extension;
-        $foto_destino = "../uploads/" . $foto_nome;
+            // Gerar um nome de arquivo seguro e aleatório
+            $foto_nome = uniqid('foto_', true) . '.' . $file_extension;
+            $foto_destino = "../uploads/" . $foto_nome;
 
-        if (!move_uploaded_file($foto['tmp_name'], $foto_destino)) {
-            die("Erro ao salvar a foto.");
+            if (!move_uploaded_file($foto['tmp_name'], $foto_destino)) {
+                throw new Exception("Erro ao salvar a foto.");
+            }
+        } catch (Exception $e) {
+            error_log("Upload de foto falhou: " . $e->getMessage());
+            $foto_nome = null;
+            $upload_warning = " A foto não foi salva devido a um erro.";
         }
     }
 
@@ -97,14 +104,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($stmt->execute()) {
         auditoria('Inspeção de nível 1 realizada', $codigo, $_SESSION['user_id'], $_SESSION['user_level'], 'Inspeção realizada com sucesso.');
-        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=Inspeção salva com sucesso');
+        $success_msg = urlencode('Inspeção salva com sucesso.' . $upload_warning);
+
+        $stmt->close();
+        $conn->close();
+
+        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . $success_msg);
         exit();
     } else {
-        echo "Erro ao salvar a inspeção: " . $stmt->error;
-    }
+        error_log("Erro ao salvar a inspeção de nível 1: " . $stmt->error);
+        $error_msg = urlencode("Erro ao salvar a inspeção. Por favor, tente novamente.");
 
-    $stmt->close();
-    $conn->close();
+        $stmt->close();
+        $conn->close();
+
+        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . $error_msg);
+        exit();
+    }
 }
 ?>
 
