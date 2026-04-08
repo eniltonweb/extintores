@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Lidar com o upload de fotos
     $foto_nome = null;
+    $upload_warning = '';
     if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
         // Validar extensão da foto
         $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
@@ -103,7 +104,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($stmt->execute()) {
         auditoria('Inspeção de nível 1 realizada', $codigo, $_SESSION['user_id'], $_SESSION['user_level'], 'Inspeção realizada com sucesso.');
-        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=Inspeção salva com sucesso');
+        $success_msg = urlencode('Inspeção salva com sucesso.' . $upload_warning);
+
+        $stmt->close();
+        $conn->close();
+
+        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . $success_msg);
         exit();
     } else {
         error_log("Erro no DB ao salvar inspeção: " . $stmt->error);
@@ -111,8 +117,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    $stmt->close();
-    $conn->close();
+        $stmt->close();
+        $conn->close();
+
+        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . $error_msg);
+        exit();
+    }
 }
 ?>
 
