@@ -53,15 +53,28 @@ if (!isset($_SESSION['nome_usuario'])){
             echo file_get_contents($cacheFile);
           } else {
             $resultado = $conn->query("SELECT id, codigo FROM bd_extintores WHERE tip_extintor='CO2'");
-            $options = [];
+
+            // Generate a temporary file to avoid partial reads/writes
+            $tempFile = dirname($cacheFile) . '/.tmp_co2_extintores_' . uniqid() . '.html';
+            $fp = @fopen($tempFile, 'w');
+
             if ($resultado) {
               while($linha = $resultado->fetch_assoc()){
-                $options[] = "<option value='{$linha['id']}'>{$linha['codigo']}</option>";
+                $option = "<option value='{$linha['id']}'>{$linha['codigo']}</option>";
+                if ($fp) {
+                  fwrite($fp, $option);
+                }
+                echo $option;
               }
+              if ($fp) {
+                fclose($fp);
+                // Atomic write for cache file
+                rename($tempFile, $cacheFile);
+              }
+            } elseif ($fp) {
+                fclose($fp);
+                unlink($tempFile);
             }
-            $html = implode('', $options);
-            file_put_contents($cacheFile, $html);
-            echo $html;
           }
         ?>
       </select>
