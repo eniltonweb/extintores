@@ -52,7 +52,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $file_extension = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
 
         if (!in_array($file_extension, $allowed_extensions)) {
-            die("Erro: Tipo de arquivo não permitido.");
+            error_log('Erro no upload: Tipo de arquivo não permitido.');
+            header('Location: formulario_inspecao.php?codigo=' . urlencode($codigo) . '&message=' . urlencode('Erro: Tipo de arquivo não permitido.'));
+            exit();
         }
 
         // Validar MIME type da foto
@@ -62,7 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $allowed_mime_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         if (!in_array($mime_type, $allowed_mime_types)) {
-            die("Erro: Tipo MIME não permitido.");
+            error_log('Erro no upload: Tipo MIME não permitido.');
+            header('Location: formulario_inspecao.php?codigo=' . urlencode($codigo) . '&message=' . urlencode('Erro: Tipo MIME não permitido.'));
+            exit();
         }
 
         // Gerar um nome de arquivo seguro e aleatório
@@ -70,7 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $foto_destino = "../uploads/" . $foto_nome;
 
         if (!move_uploaded_file($foto['tmp_name'], $foto_destino)) {
-            die("Erro ao salvar a foto.");
+            error_log('Erro no upload: Falha ao mover arquivo enviado.');
+            header('Location: formulario_inspecao.php?codigo=' . urlencode($codigo) . '&message=' . urlencode('Erro ao salvar a foto.'));
+            exit();
         }
     }
 
