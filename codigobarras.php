@@ -19,7 +19,6 @@ $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 header("Content-Security-Policy: default-src 'self'; img-src 'self' http://www.enilton.com.br; script-src 'self' https://code.jquery.com https://cdn.jsdelivr.net https://maxcdn.bootstrapcdn.com; style-src 'self' https://maxcdn.bootstrapcdn.com 'unsafe-inline';");
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
-header('X-XSS-Protection: 1; mode=block');
 
 // Consulta para obter as informações do extintor e o nome do usuário que fez a última inspeção de nível 1
 $sql = "
