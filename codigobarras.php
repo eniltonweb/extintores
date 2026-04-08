@@ -3,17 +3,18 @@ session_start();
 require_once __DIR__ . '/config/db_conexao.php';
 include 'auditoria.php';
 
-$error = null;
-$codigo = null;
+$error_message = '';
 
 if (!isset($_GET['codigo'])) {
-    $error = 'Código de barras não fornecido.';
+    $error_message = 'Código de barras não fornecido.';
+    error_log($error_message);
 } else {
-    $codigo = htmlspecialchars($_GET['codigo']);
+    $codigo = $_GET['codigo']; // will be sanitized below if needed
     if (!preg_match('/^[a-zA-Z0-9\-]+$/', $codigo)) {
-        $error = 'Código inválido.';
-        $codigo = null;
+        $error_message = 'Código inválido.';
+        error_log($error_message);
     }
+    $codigo = htmlspecialchars($codigo);
 }
 
 $user_level = isset($_SESSION['user_level']) ? $_SESSION['user_level'] : null;
@@ -24,8 +25,8 @@ header("Content-Security-Policy: default-src 'self'; img-src 'self' http://www.e
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 
-$result = false;
-if (!$error) {
+$result = null;
+if (empty($error_message)) {
     // Consulta para obter as informações do extintor e o nome do usuário que fez a última inspeção de nível 1
     $sql = "
         SELECT e.*,
@@ -81,8 +82,8 @@ if ($user_level == 'admin') {
 ?>
 <div class="container mt-4">
 <?php
-if ($error) {
-    echo "<div class='alert alert-danger'>" . htmlspecialchars($error) . "</div>";
+if (!empty($error_message)) {
+    echo "<div class='alert alert-danger'>" . htmlspecialchars($error_message) . "</div>";
 } elseif ($result) {
     if ($result->num_rows > 0) {
         $extintor = $result->fetch_assoc();
