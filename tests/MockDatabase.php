@@ -26,9 +26,11 @@ class MockStatement {
         return true;
     }
 
+    public $executeResult = true;
+
     public function execute() {
         $this->executed = true;
-        return true;
+        return $this->executeResult;
     }
 
     public function bind_result(&...$vars) {
@@ -56,6 +58,11 @@ class MockStatement {
 
     public function close() {
         $this->closed = true;
+    }
+
+    public function store_result() {
+        $this->num_rows = count($this->mock_rows);
+        return true;
     }
 }
 
