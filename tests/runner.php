@@ -36,14 +36,21 @@ if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) 
                 if (strpos($method, 'test') === 0) {
                     echo "Running {$class_name}::{$method}... ";
                     try {
+                        ob_start();
                         $test_obj->$method();
+                        $output = ob_get_clean();
                         echo "PASSED\n";
+                        if (!empty($output)) echo "Output: " . $output . "\n";
                         $passed++;
                     } catch (Exception $e) {
+                        $output = ob_get_clean();
                         echo "FAILED: " . $e->getMessage() . "\n";
+                        if (!empty($output)) echo "Output: " . $output . "\n";
                         $failed++;
                     } catch (Error $e) {
+                        $output = ob_get_clean();
                         echo "ERROR: " . $e->getMessage() . "\n";
+                        if (!empty($output)) echo "Output: " . $output . "\n";
                         $failed++;
                     }
                 }
