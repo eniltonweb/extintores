@@ -78,7 +78,7 @@ EOT;
         $this->assertEquals(0, $return_var, "Script should return 0 exit code. Output: " . $output_str);
 
         $this->assertTrue(
-            strpos($output_str, 'A mensagem não pôde ser enviada. Erro: Mocked Mail Error') !== false,
+            strpos($output_str, 'O resumo de alertas não pôde ser enviado. Erro: Mocked Mail Error') !== false,
             "Output should contain the exception error message. Got: " . $output_str
         );
     }

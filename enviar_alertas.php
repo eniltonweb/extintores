@@ -18,11 +18,11 @@ $result = $conn->query($sql);
 
 if ($result->num_rows > 0) {
     $smtpHost = getenv('SMTP_HOST') ?: 'smtp.example.com';
-    $smtpUser = getenv('SMTP_USER') ?: 'seu_email@example.com';
-    $smtpPass = getenv('SMTP_PASS') ?: 'sua_senha';
+    $smtpUser = getenv('SMTP_USER') ?: '';
+    $smtpPass = getenv('SMTP_PASS') ?: '';
     $smtpSecure = getenv('SMTP_SECURE') ?: 'tls';
     $smtpPort = (int)(getenv('SMTP_PORT') ?: 587);
-    $mailFrom = getenv('MAIL_FROM') ?: 'seu_email@example.com';
+    $mailFrom = getenv('MAIL_FROM') ?: 'sistema@example.com';
     $mailRecipient = getenv('MAIL_RECIPIENT') ?: 'destinatario@example.com';
 
     $mail = new PHPMailer(true);
@@ -41,6 +41,7 @@ if ($result->num_rows > 0) {
         $mensagens = [];
         $codigos = [];
 
+        $alertas = [];
         while ($row = $result->fetch_assoc()) {
             $mensagens[] = "O extintor com código {$row['codigo']} está com manutenção pendente. Próxima manutenção: {$row['proxima_manutencao_n2']}";
             $codigos[] = $row['codigo'];

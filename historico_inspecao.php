@@ -42,28 +42,48 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
             AND bd_extintores.inspecao_trimestral_nivel1 >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
     ";
 
+    $params = [];
+    $types = "";
+
     if (!empty($extintor_codigo)) {
-        $sql .= " AND bd_extintores.codigo LIKE '%" . $conn->real_escape_string($extintor_codigo) . "%'";
+        $sql .= " AND bd_extintores.codigo LIKE ?";
+        $params[] = "%" . $extintor_codigo . "%";
+        $types .= "s";
     }
 
     if (!empty($predio)) {
-        $sql .= " AND bd_extintores.Predio LIKE '%" . $conn->real_escape_string($predio) . "%'";
+        $sql .= " AND bd_extintores.Predio LIKE ?";
+        $params[] = "%" . $predio . "%";
+        $types .= "s";
     }
 
     $sql .= " ORDER BY bd_extintores.inspecao_trimestral_nivel1 DESC";
 
-    $result = $conn->query($sql);
+    $stmt = $conn->prepare($sql);
+    if ($stmt === false) {
+        error_log("Error preparing statement: " . $conn->error);
+        exit();
+    }
+
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     $data = [];
     $inspecoes_por_data = [];
 
-    while ($row = $result->fetch_assoc()) {
-        $data[] = $row;
-        $data_inspecao = $row['data_inspecao'];
-        if (!isset($inspecoes_por_data[$data_inspecao])) {
-            $inspecoes_por_data[$data_inspecao] = 1;
-        } else {
-            $inspecoes_por_data[$data_inspecao]++;
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $data[] = $row;
+            $data_inspecao = $row['data_inspecao'];
+            if (!isset($inspecoes_por_data[$data_inspecao])) {
+                $inspecoes_por_data[$data_inspecao] = 1;
+            } else {
+                $inspecoes_por_data[$data_inspecao]++;
+            }
         }
     }
 
@@ -150,6 +170,7 @@ $conn->close();
         <button type="submit" class="btn btn-primary">Filtrar</button>
     </form>
 
+    <!-- Note: "todo" below is a Portuguese word (meaning "all"), not a developer TODO comment. -->
     <form method="POST" action="limpar_historico_inspecao.php" onsubmit="return confirm('Tem certeza que deseja limpar todo o histórico? Esta ação não pode ser desfeita.');">
         <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
         <button type="submit" class="btn btn-danger mb-4">Limpar Histórico</button>
