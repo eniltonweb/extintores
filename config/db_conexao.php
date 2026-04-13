@@ -15,7 +15,7 @@ try {
 } catch (mysqli_sql_exception $e) {
     error_log('Erro de conexão com o banco: ' . $e->getMessage());
     http_response_code(500);
-    exit('Não foi possível conectar ao banco de dados.');
+    throw new Exception('Não foi possível conectar ao banco de dados.', 0, $e);
 }
 
 // Inicializa o token CSRF se a sessão estiver ativa

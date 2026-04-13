@@ -15,15 +15,17 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Verificar token CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die('Erro CSRF detectado.');
-    }
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        error_log('Erro CSRF detectado.');
+        $message = "Erro de validação. Tente novamente.";
+    } else {
+        $action = $_POST['action'];
+        $tipo_liberacao = $_POST['tipo_liberacao'];
+        $liberar_para = $_POST['liberar_para'];
 
-    $action = $_POST['action'];
-    $tipo_liberacao = $_POST['tipo_liberacao'];
-    $liberar_para = $_POST['liberar_para'];
+        $stmt = null;
 
-    if ($action == 'liberar') {
+        if ($action == 'liberar') {
         if ($tipo_liberacao == 'extintor') {
             $codigo_extintor = $_POST['codigo_extintor'];
             if ($liberar_para == 'bombeiro') {
@@ -63,14 +65,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = $conn->prepare($sql);
             $stmt->bind_param('s', $predio);
         }
-    }
+        }
 
-    if ($stmt->execute()) {
-        $message = "Ação realizada com sucesso.";
-    } else {
-        $message = "Erro ao realizar a ação: " . $stmt->error;
+        if ($stmt && $stmt->execute()) {
+            $message = "Ação realizada com sucesso.";
+        } else {
+            error_log("Erro na execução da ação em liberar_manutencao.php: " . ($stmt ? $stmt->error : 'Statement não definido'));
+            $message = "Erro interno no servidor ao realizar a ação.";
+        }
+        if ($stmt) {
+            $stmt->close();
+        }
     }
-    $stmt->close();
 }
 
 // Adicionar um endpoint para carregar os dados de liberação de forma assíncrona
