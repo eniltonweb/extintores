@@ -15,12 +15,88 @@ $csrf_token = $_SESSION['csrf_token'];
 if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $extintor_codigo = isset($_GET['extintor_codigo']) ? $_GET['extintor_codigo'] : '';
     $predio = isset($_GET['predio']) ? $_GET['predio'] : '';
-    $cobertura = isset($_GET['cobertura']) && $_GET['cobertura'] == 'SIM' ? 1 : '';
+    $cobertura = isset($_GET['cobertura']) ? $_GET['cobertura'] : '';
     $data_inicial = isset($_GET['data_inicial']) ? $_GET['data_inicial'] : '';
     $data_final = isset($_GET['data_final']) ? $_GET['data_final'] : '';
 
-    // Consulta atualizada sem o LEFT JOIN
-    $sql = "
+    // Build WHERE clauses
+    $where_clauses = ["bd_extintores.manutencao_n2 IS NOT NULL"];
+    $params = [];
+    $types = "";
+
+    if (!empty($extintor_codigo)) {
+        $where_clauses[] = "bd_extintores.codigo LIKE ?";
+        $params[] = "%" . $extintor_codigo . "%";
+        $types .= "s";
+    }
+    if (!empty($predio)) {
+        $where_clauses[] = "bd_extintores.Predio LIKE ?";
+        $params[] = "%" . $predio . "%";
+        $types .= "s";
+    }
+    if ($cobertura === 'SIM') {
+        $where_clauses[] = "bd_extintores.cobertura = 1";
+    }
+    if (!empty($data_inicial)) {
+        $where_clauses[] = "bd_extintores.manutencao_n2 >= ?";
+        $params[] = $data_inicial;
+        $types .= "s";
+    }
+    if (!empty($data_final)) {
+        $where_clauses[] = "bd_extintores.manutencao_n2 <= ?";
+        $params[] = $data_final;
+        $types .= "s";
+    }
+    $where_sql = implode(" AND ", $where_clauses);
+
+    // 1. Contar total de registros para a paginação
+    $sql_count = "SELECT COUNT(*) AS total FROM bd_extintores WHERE $where_sql";
+    $stmt_count = $conn->prepare($sql_count);
+    if (!empty($params)) {
+        $bind_params = [];
+        foreach ($params as $key => $value) {
+            $bind_params[$key] = &$params[$key];
+        }
+        $stmt_count->bind_param($types, ...$bind_params);
+    }
+    $stmt_count->execute();
+    $result_count = $stmt_count->get_result();
+    $total_registros = $result_count->fetch_assoc()['total'];
+    $stmt_count->close();
+
+    $itens_por_pagina = 20;
+    $total_paginas = ceil($total_registros / $itens_por_pagina);
+    $pagina_atual = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+    if ($pagina_atual < 1) $pagina_atual = 1;
+    if ($total_paginas > 0 && $pagina_atual > $total_paginas) $pagina_atual = $total_paginas;
+    $offset = ($pagina_atual - 1) * $itens_por_pagina;
+
+    // 2. Buscar dados para o gráfico usando GROUP BY (evita carregar todos os dados em PHP)
+    $sql_chart = "
+        SELECT manutencao_n2 AS data_manutencao, COUNT(*) AS total
+        FROM bd_extintores
+        WHERE $where_sql
+        GROUP BY manutencao_n2
+        ORDER BY manutencao_n2 ASC
+    ";
+    $stmt_chart = $conn->prepare($sql_chart);
+    if (!empty($params)) {
+        $bind_params_chart = [];
+        foreach ($params as $key => $value) {
+            $bind_params_chart[$key] = &$params[$key];
+        }
+        $stmt_chart->bind_param($types, ...$bind_params_chart);
+    }
+    $stmt_chart->execute();
+    $result_chart = $stmt_chart->get_result();
+    $manutencoes_por_data = [];
+    while ($row_chart = $result_chart->fetch_assoc()) {
+        $manutencoes_por_data[$row_chart['data_manutencao']] = (int)$row_chart['total'];
+    }
+    $stmt_chart->close();
+
+    // 3. Buscar dados paginados para a tabela
+    $sql_paginated = "
         SELECT 
             bd_extintores.codigo AS extintor_codigo, 
             bd_extintores.Local_Exato AS local_exato,
@@ -34,47 +110,42 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
         FROM 
             bd_extintores
         WHERE 
-            bd_extintores.manutencao_n2 IS NOT NULL
+            $where_sql
+        ORDER BY bd_extintores.manutencao_n2 DESC
+        LIMIT ? OFFSET ?
     ";
 
-    if (!empty($extintor_codigo)) {
-        $sql .= " AND bd_extintores.codigo LIKE '%" . $conn->real_escape_string($extintor_codigo) . "%'";
+    // Add limit and offset to parameters for the final query
+    $params_paginated = $params;
+    $types_paginated = $types . "ii";
+    $params_paginated[] = $itens_por_pagina;
+    $params_paginated[] = $offset;
+
+    $stmt_paginated = $conn->prepare($sql_paginated);
+
+    $bind_params_paginated = [];
+    foreach ($params_paginated as $key => $value) {
+        $bind_params_paginated[$key] = &$params_paginated[$key];
     }
-
-    if (!empty($predio)) {
-        $sql .= " AND bd_extintores.Predio LIKE '%" . $conn->real_escape_string($predio) . "%'";
-    }
-
-    if ($cobertura !== '') {
-        $sql .= " AND bd_extintores.cobertura = 1";
-    }
-
-    if (!empty($data_inicial)) {
-        $sql .= " AND bd_extintores.manutencao_n2 >= '" . $conn->real_escape_string($data_inicial) . "'";
-    }
-
-    if (!empty($data_final)) {
-        $sql .= " AND bd_extintores.manutencao_n2 <= '" . $conn->real_escape_string($data_final) . "'";
-    }
-
-    $sql .= " ORDER BY bd_extintores.manutencao_n2 DESC";
-
-    $result = $conn->query($sql);
-
+    $stmt_paginated->bind_param($types_paginated, ...$bind_params_paginated);
+    $stmt_paginated->execute();
+    $result_paginated = $stmt_paginated->get_result();
     $data = [];
-    $manutencoes_por_data = [];
-
-    while ($row = $result->fetch_assoc()) {
+    while ($row = $result_paginated->fetch_assoc()) {
         $data[] = $row;
-        $data_manutencao = $row['data_manutencao'];
-        if (!isset($manutencoes_por_data[$data_manutencao])) {
-            $manutencoes_por_data[$data_manutencao] = 1;
-        } else {
-            $manutencoes_por_data[$data_manutencao]++;
-        }
     }
+    $stmt_paginated->close();
 
-    echo json_encode(['data' => $data, 'manutencoes_por_data' => $manutencoes_por_data]);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'data' => $data,
+        'manutencoes_por_data' => $manutencoes_por_data,
+        'pagination' => [
+            'total_paginas' => (int)$total_paginas,
+            'pagina_atual' => (int)$pagina_atual,
+            'total_registros' => (int)$total_registros
+        ]
+    ]);
     $conn->close();
     exit();
 }
@@ -196,6 +267,12 @@ $conn->close();
         <tbody></tbody>
     </table>
 
+    <nav aria-label="Navegação de página" class="mt-4">
+        <ul id="pagination" class="pagination justify-content-center">
+            <!-- Os controles de paginação serão inseridos aqui via JS -->
+        </ul>
+    </nav>
+
     <div class="chart-container mt-4">
         <canvas id="manutencaoChart"></canvas>
     </div>
@@ -210,39 +287,90 @@ $conn->close();
         loadManutencoes();
     });
 
-    function loadManutencoes() {
+    function loadManutencoes(page = 1) {
         const extintorCodigo = document.getElementById('extintor_codigo').value;
         const predio = document.getElementById('predio').value;
         const cobertura = document.getElementById('cobertura').value;
         const dataInicial = document.getElementById('data_inicial').value;
         const dataFinal = document.getElementById('data_final').value;
-        const url = `historico_manutencao.php?action=fetch_data&extintor_codigo=${extintorCodigo}&predio=${predio}&cobertura=${cobertura}&data_inicial=${dataInicial}&data_final=${dataFinal}`;
+        const url = `historico_manutencao.php?action=fetch_data&extintor_codigo=${extintorCodigo}&predio=${predio}&cobertura=${cobertura}&data_inicial=${dataInicial}&data_final=${dataFinal}&page=${page}`;
 
         fetch(url)
             .then(response => response.json())
             .then(data => {
                 const manutencoes = data.data;
                 const manutencoesPorData = data.manutencoes_por_data;
+                const pagination = data.pagination;
 
                 const tableBody = document.querySelector('table tbody');
                 tableBody.innerHTML = '';
 
-                manutencoes.forEach(row => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${row.extintor_codigo}</td>
-                        <td>${row.predio}</td>
-                        <td>${row.local_exato}</td>
-                        <td>${row.usuario_nome}</td>
-                        <td>${new Date(row.data_manutencao).toLocaleDateString('pt-BR')}</td>
-                        <td>${row.cobertura === 1 ? 'Sim' : 'Não'}</td>
-                    `;
-                    tableBody.appendChild(tr);
-                });
+                if (manutencoes.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhuma manutenção encontrada</td></tr>';
+                } else {
+                    manutencoes.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${row.extintor_codigo}</td>
+                            <td>${row.predio}</td>
+                            <td>${row.local_exato}</td>
+                            <td>${row.usuario_nome}</td>
+                            <td>${new Date(row.data_manutencao).toLocaleDateString('pt-BR')}</td>
+                            <td>${row.cobertura === 1 ? 'Sim' : 'Não'}</td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+                }
 
+                updatePagination(pagination);
                 updateChart(manutencoesPorData);
             })
             .catch(error => console.error('Error:', error));
+    }
+
+    function updatePagination(pagination) {
+        const paginationContainer = document.getElementById('pagination');
+        paginationContainer.innerHTML = '';
+
+        if (pagination.total_paginas <= 1) return;
+
+        const range = 2;
+        const currentPage = pagination.pagina_atual;
+        const totalPages = pagination.total_paginas;
+
+        if (currentPage > 1) {
+            paginationContainer.appendChild(createPageItem('Anterior', currentPage - 1));
+        }
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
+                paginationContainer.appendChild(createPageItem(i, i, i === currentPage));
+            } else if (i === currentPage - range - 1 || i === currentPage + range + 1) {
+                const li = document.createElement('li');
+                li.className = 'page-item disabled';
+                li.innerHTML = '<span class="page-link">...</span>';
+                paginationContainer.appendChild(li);
+            }
+        }
+
+        if (currentPage < totalPages) {
+            paginationContainer.appendChild(createPageItem('Próximo', currentPage + 1));
+        }
+    }
+
+    function createPageItem(label, page, active = false) {
+        const li = document.createElement('li');
+        li.className = `page-item ${active ? 'active' : ''}`;
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.textContent = label;
+        a.onclick = (e) => {
+            e.preventDefault();
+            loadManutencoes(page);
+        };
+        li.appendChild(a);
+        return li;
     }
 
     function updateChart(manutencoesPorData) {

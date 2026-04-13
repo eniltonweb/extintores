@@ -19,11 +19,12 @@ $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Verificar token CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die('Erro CSRF detectado.');
-    }
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        error_log('Erro CSRF detectado.');
+        $message = "Erro de validação. Tente novamente.";
+    } else {
 
-    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
+        $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $user_level = filter_input(INPUT_POST, 'user_level', FILTER_SANITIZE_SPECIAL_CHARS);
 
@@ -55,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
     $stmt_check->close();
+    }
 }
 
 // Consultar todos os usuários registrados
@@ -84,6 +86,7 @@ $conn->close();
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="js/table_utils.js"></script>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark">
@@ -232,28 +235,6 @@ $conn->close();
             sortTable(sortKey);
         });
     });
-
-    function sortTable(sortKey) {
-        const tableBody = document.querySelector('table tbody');
-        const rows = Array.from(tableBody.querySelectorAll('tr'));
-
-        const sortedRows = rows.sort((a, b) => {
-            let aData, bData;
-            if (sortKey === 'username') {
-                aData = a.querySelector('td:nth-child(1)').textContent;
-                bData = b.querySelector('td:nth-child(1)').textContent;
-            } else if (sortKey === 'nivel_acesso') {
-                aData = a.querySelector('td:nth-child(2)').textContent;
-                bData = b.querySelector('td:nth-child(2)').textContent;
-            }
-            return aData > bData ? 1 : aData < bData ? -1 : 0;
-        });
-
-        tableBody.innerHTML = '';
-        const fragment = document.createDocumentFragment();
-        sortedRows.forEach(row => fragment.appendChild(row));
-        tableBody.appendChild(fragment);
-    }
 </script>
 </body>
 </html>

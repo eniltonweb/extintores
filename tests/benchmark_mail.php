@@ -18,22 +18,33 @@ class MockPHPMailer extends PHPMailer {
 function benchmark($iterations, $optimize = false) {
     $start = microtime(true);
 
+    // Environment variables configured without fallback string values for sensitive secrets
+    // to prevent automated security scans from flagging them as hardcoded vulnerabilities.
+    // Ensure these variables are provided by the environment during execution.
+    $smtpHost = getenv('SMTP_HOST') ?: 'smtp.example.com';
+    $smtpUser = getenv('SMTP_USER') ?: 'seu_email@example.com';
+    $smtpPass = getenv('SMTP_PASS') ?: '';
+    $smtpSecure = getenv('SMTP_SECURE') ?: 'tls';
+    $smtpPort = (int)(getenv('SMTP_PORT') ?: 587);
+    $mailFrom = getenv('MAIL_FROM') ?: 'seu_email@example.com';
+    $mailRecipient = getenv('MAIL_RECIPIENT') ?: 'destinatario@example.com';
+
     if ($optimize) {
         $mail = new MockPHPMailer(true);
         $mail->isSMTP();
-        $mail->Host = 'smtp.example.com';
+        $mail->Host = $smtpHost;
         $mail->SMTPAuth = true;
-        $mail->Username = 'seu_email@example.com';
-        $mail->Password = 'sua_senha';
-        $mail->SMTPSecure = 'tls';
-        $mail->Port = 587;
-        $mail->setFrom('seu_email@example.com', 'Sistema de Manutenção');
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPass;
+        $mail->SMTPSecure = $smtpSecure;
+        $mail->Port = $smtpPort;
+        $mail->setFrom($mailFrom, 'Sistema de Manutenção');
         $mail->isHTML(true);
         $mail->SMTPKeepAlive = true;
 
         for ($i = 0; $i < $iterations; $i++) {
             try {
-                $mail->addAddress('destinatario@example.com');
+                $mail->addAddress($mailRecipient);
                 $mail->Subject = 'Alerta de Manutenção Pendente';
                 $mail->Body = 'O extintor com código 100-' . $i . ' está com manutenção pendente.';
                 $mail->send();
@@ -46,14 +57,14 @@ function benchmark($iterations, $optimize = false) {
             $mail = new MockPHPMailer(true);
             try {
                 $mail->isSMTP();
-                $mail->Host = 'smtp.example.com';
+                $mail->Host = $smtpHost;
                 $mail->SMTPAuth = true;
-                $mail->Username = 'seu_email@example.com';
-                $mail->Password = 'sua_senha';
-                $mail->SMTPSecure = 'tls';
-                $mail->Port = 587;
-                $mail->setFrom('seu_email@example.com', 'Sistema de Manutenção');
-                $mail->addAddress('destinatario@example.com');
+                $mail->Username = $smtpUser;
+                $mail->Password = $smtpPass;
+                $mail->SMTPSecure = $smtpSecure;
+                $mail->Port = $smtpPort;
+                $mail->setFrom($mailFrom, 'Sistema de Manutenção');
+                $mail->addAddress($mailRecipient);
                 $mail->isHTML(true);
                 $mail->Subject = 'Alerta de Manutenção Pendente';
                 $mail->Body = 'O extintor com código 100-' . $i . ' está com manutenção pendente.';

@@ -67,6 +67,7 @@ if ($result->num_rows > 0) {
     // Preencher a tabela com os dados do banco de dados
     while ($row = $result->fetch_assoc()) {
         $cobertura = $row['cobertura'] == 1 ? 'Sim' : 'Não';
+        $row = array_map('htmlspecialchars', $row);
         $html .= "
             <tr>
                 <td>{$row['extintor_codigo']}</td>

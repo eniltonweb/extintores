@@ -1,12 +1,6 @@
 <?php
 // Registrar a exportação no log de auditoria
-function registrar_auditoria($conn, $user_id, $action, $details) {
-    $sql = "INSERT INTO auditoria_logs (user_id, action, detalhes) VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('iss', $user_id, $action, $details);
-    $stmt->execute();
-    $stmt->close();
-}
+require_once __DIR__ . '/auditoria.php';
 
 // Verificar se o script está sendo executado diretamente e não incluído
 if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === realpath(__FILE__)) {

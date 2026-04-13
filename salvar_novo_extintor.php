@@ -1,9 +1,4 @@
 <?php
-// Habilitar exibição de erros para depuração
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 session_start();
 require_once __DIR__ . '/config/db_conexao.php';
 include 'auditoria.php';
@@ -15,6 +10,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'bombeiro') {
 
 // Verificar se o formulário foi submetido
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (empty($_SESSION['csrf_token']) || !isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        error_log('Falha na validação CSRF em salvar_novo_extintor.php. Tentativa de requisição inválida.');
+        header('Location: index.php');
+        exit();
+    }
+
     $novo_predio = filter_input(INPUT_POST, 'novo_predio', FILTER_SANITIZE_SPECIAL_CHARS);
     $novo_codigo = filter_input(INPUT_POST, 'novo_codigo', FILTER_SANITIZE_SPECIAL_CHARS);
     $novo_local = filter_input(INPUT_POST, 'novo_local', FILTER_SANITIZE_SPECIAL_CHARS);

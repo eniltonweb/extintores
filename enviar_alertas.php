@@ -17,39 +17,46 @@ $sql = "SELECT * FROM bd_extintores WHERE dias_para_expirar_n2 <= 30";
 $result = $conn->query($sql);
 
 if ($result->num_rows > 0) {
+    $smtpHost = getenv('SMTP_HOST') ?: 'smtp.example.com';
+    $smtpUser = getenv('SMTP_USER') ?: 'seu_email@example.com';
+    $smtpPass = getenv('SMTP_PASS') ?: 'sua_senha';
+    $smtpSecure = getenv('SMTP_SECURE') ?: 'tls';
+    $smtpPort = (int)(getenv('SMTP_PORT') ?: 587);
+    $mailFrom = getenv('MAIL_FROM') ?: 'seu_email@example.com';
+    $mailRecipient = getenv('MAIL_RECIPIENT') ?: 'destinatario@example.com';
+
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->Host = 'smtp.example.com';
+        $mail->Host = $smtpHost;
         $mail->SMTPAuth = true;
-        $mail->Username = 'seu_email@example.com';
-        $mail->Password = 'sua_senha';
-        $mail->SMTPSecure = 'tls';
-        $mail->Port = 587;
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPass;
+        $mail->SMTPSecure = $smtpSecure;
+        $mail->Port = $smtpPort;
 
-        $mail->setFrom('seu_email@example.com', 'Sistema de Manutenção');
+        $mail->setFrom($mailFrom, 'Sistema de Manutenção');
         $mail->isHTML(true);
-        $mail->SMTPKeepAlive = true; // Mantém a conexão SMTP aberta para múltiplos envios
 
+        $alertas = [];
         while ($row = $result->fetch_assoc()) {
-            try {
-                $mail->addAddress('destinatario@example.com');
+            $alertas[] = '<li>O extintor com código <strong>' . htmlspecialchars($row['codigo']) . '</strong> está com manutenção pendente. Próxima manutenção: ' . htmlspecialchars($row['proxima_manutencao_n2']) . '</li>';
+        }
 
-                $mail->Subject = 'Alerta de Manutenção Pendente';
-                $mail->Body = 'O extintor com código ' . $row['codigo'] . ' está com manutenção pendente. Próxima manutenção: ' . $row['proxima_manutencao_n2'];
+        if (!empty($alertas)) {
+            try {
+                $mail->addAddress($mailRecipient);
+                $mail->Subject = 'Resumo de Alertas de Manutenção Pendente';
+                $mail->Body = '<h3>Alertas de Manutenção Pendente</h3><ul>' . implode('', $alertas) . '</ul>';
 
                 $mail->send();
-                echo 'Mensagem enviada para ' . $row['codigo'] . '<br>';
-
-                // Limpa todos os destinatários após o envio para o próximo loop
-                $mail->clearAddresses();
+                echo 'Resumo de alertas enviado com sucesso.<br>';
             } catch (Exception $e) {
-                echo "A mensagem não pôde ser enviada. Erro: {$mail->ErrorInfo}";
-                // Limpa destinatários em caso de erro para evitar acumular
+                echo "O resumo de alertas não pôde ser enviado. Erro: {$mail->ErrorInfo}";
+            } finally {
                 $mail->clearAddresses();
             }
         }
-        $mail->smtpClose(); // Fecha a conexão SMTP após o término do loop
     } catch (Exception $e) {
         echo "Erro ao configurar o envio de emails: {$mail->ErrorInfo}";
     }
