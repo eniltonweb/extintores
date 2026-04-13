@@ -27,9 +27,16 @@ class SalvarInspecaoTest extends MiniTestCase {
 
     public function testUploadInvalidExtension() {
         $state = [
-            'session' => ['user_id' => 1, 'user_level' => 'bombeiro'],
+            'session' => [
+                'user_id' => 1,
+                'user_level' => 'bombeiro',
+                'csrf_token' => 'valid_token'
+            ],
             'server' => ['REQUEST_METHOD' => 'POST'],
-            'post' => ['codigo' => '123'],
+            'post' => [
+                'codigo' => '123',
+                'csrf_token' => 'valid_token'
+            ],
             'files' => [
                 'foto' => [
                     'name' => 'test.txt',
@@ -52,9 +59,16 @@ class SalvarInspecaoTest extends MiniTestCase {
 
     public function testUploadInvalidMimeType() {
         $state = [
-            'session' => ['user_id' => 1, 'user_level' => 'bombeiro'],
+            'session' => [
+                'user_id' => 1,
+                'user_level' => 'bombeiro',
+                'csrf_token' => 'valid_token'
+            ],
             'server' => ['REQUEST_METHOD' => 'POST'],
-            'post' => ['codigo' => '123'],
+            'post' => [
+                'codigo' => '123',
+                'csrf_token' => 'valid_token'
+            ],
             'files' => [
                 'foto' => [
                     'name' => 'test.jpg', // Valid extension
@@ -77,9 +91,16 @@ class SalvarInspecaoTest extends MiniTestCase {
 
     public function testUploadMoveFileError() {
         $state = [
-            'session' => ['user_id' => 1, 'user_level' => 'bombeiro'],
+            'session' => [
+                'user_id' => 1,
+                'user_level' => 'bombeiro',
+                'csrf_token' => 'valid_token'
+            ],
             'server' => ['REQUEST_METHOD' => 'POST'],
-            'post' => ['codigo' => '123'],
+            'post' => [
+                'codigo' => '123',
+                'csrf_token' => 'valid_token'
+            ],
             'files' => [
                 'foto' => [
                     'name' => 'test.jpg', // Valid extension
