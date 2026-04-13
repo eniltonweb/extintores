@@ -60,16 +60,17 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $sql .= " ORDER BY bd_extintores.inspecao_trimestral_nivel1 DESC";
 
     $stmt = $conn->prepare($sql);
-    if ($stmt) {
-        if (!empty($params)) {
-            $stmt->bind_param($types, ...$params);
-        }
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-    } else {
-        $result = false;
+    if ($stmt === false) {
+        error_log("Error preparing statement: " . $conn->error);
+        exit();
     }
+
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     $data = [];
     $inspecoes_por_data = [];
