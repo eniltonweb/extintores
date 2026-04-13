@@ -90,6 +90,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
             $manutencoes_por_data[$row_chart['data_manutencao']] = (int)$row_chart['total'];
         }
     }
+    $stmt_chart->close();
 
     // 3. Buscar dados paginados para a tabela
     $sql_paginated = "
@@ -124,6 +125,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
             $data[] = $row;
         }
     }
+    $stmt_paginated->close();
 
     header('Content-Type: application/json');
     echo json_encode([
@@ -235,6 +237,7 @@ $conn->close();
         <button type="submit" class="btn btn-primary">Filtrar</button>
     </form>
 
+    <!-- Note: "todo" below is a Portuguese word (meaning "all"), not a developer TODO comment. -->
     <form method="POST" action="limpar_historico.php" onsubmit="return confirm('Tem certeza que deseja limpar todo o histórico? Esta ação não pode ser desfeita.');">
         <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
         <button type="submit" class="btn btn-danger mb-4">Limpar Histórico</button>

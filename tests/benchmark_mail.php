@@ -18,13 +18,13 @@ class MockPHPMailer extends PHPMailer {
 function benchmark($iterations, $optimize = false) {
     $start = microtime(true);
 
-    $smtpHost = getenv('SMTP_HOST') ?: 'smtp.example.com';
-    $smtpUser = getenv('SMTP_USER') ?: 'seu_email@example.com';
-    $smtpPass = getenv('SMTP_PASS') ?: 'sua_senha';
-    $smtpSecure = getenv('SMTP_SECURE') ?: 'tls';
+    $smtpHost = getenv('SMTP_HOST') ?: '';
+    $smtpUser = getenv('SMTP_USER') ?: '';
+    $smtpPass = getenv('SMTP_PASS') ?: '';
+    $smtpSecure = getenv('SMTP_SECURE') ?: '';
     $smtpPort = (int)(getenv('SMTP_PORT') ?: 587);
-    $mailFrom = getenv('MAIL_FROM') ?: 'seu_email@example.com';
-    $mailRecipient = getenv('MAIL_RECIPIENT') ?: 'destinatario@example.com';
+    $mailFrom = getenv('MAIL_FROM') ?: '';
+    $mailRecipient = getenv('MAIL_RECIPIENT') ?: '';
 
     if ($optimize) {
         $mail = new MockPHPMailer(true);
