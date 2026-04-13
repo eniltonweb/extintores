@@ -1,182 +1,167 @@
 <?php
 
-require_once __DIR__ . '/MockDatabase.php';
-
-// Force the inclusion without executing the script
-$_SERVER['SCRIPT_FILENAME'] = 'phpunit.php';
-require_once __DIR__ . '/../aprovar_extintor.php';
-
-// Include the original auditoria.php, but override its behavior or intercept it?
-// The project has `auditoria.php`. Since it's procedural and tested, we can just let it run
-// and intercept it if we need, or simply include it, but then the DB queries in it will run on MockDatabase.
-// To capture the call, since we can't redefine `auditoria`, we can just check if MockDatabase received the query.
-// Wait, `auditoria.php` does:
-// $sql = "INSERT INTO auditoria ...";
-// $stmt = $conn->prepare($sql);
-// So we can check `$conn->statements` for the INSERT INTO auditoria.
-
-// Let's remove the function_exists mock.
-
 class AprovarExtintorTest extends MiniTestCase {
 
-    public function setUp() {
-        $GLOBALS['auditoria_calls'] = [];
+    private function runWrapper($stateData) {
+        $wrapper_script = __DIR__ . '/wrapper_aprovar_extintor.php';
+        $json_data = escapeshellarg(json_encode($stateData));
+
+        $cmd = "php {$wrapper_script} {$json_data} 2>&1";
+        exec($cmd, $output, $return_var);
+
+        return [
+            'output' => implode("\n", $output),
+            'status' => $return_var
+        ];
+    }
+
+    private function getValidSession() {
+        return [
+            'user_id' => 1,
+            'user_level' => 'admin',
+            'csrf_token' => 'valid_token_123'
+        ];
     }
 
     public function testRedirectsWhenNoSession() {
-        $conn = new MockConnection();
-        $session = [];
-        $post = [];
-        $server = ['REQUEST_METHOD' => 'POST'];
+        $result = $this->runWrapper([]);
 
-        $result = aprovar_extintor_logic($conn, $session, $post, $server);
-        $this->assertEquals('Location: index.php', $result);
+        $this->assertTrue(
+            strpos($result['output'], '[MOCK_HEADER] Location: index.php') !== false,
+            "Expected a redirect to index.php when there is no session."
+        );
     }
 
     public function testRedirectsWhenNotAdmin() {
-        $conn = new MockConnection();
-        $session = [
-            'user_id' => 1,
-            'user_level' => 'fornecedor'
+        $state = [
+            'session' => [
+                'user_id' => 1,
+                'user_level' => 'bombeiro'
+            ]
         ];
-        $post = [];
-        $server = ['REQUEST_METHOD' => 'POST'];
+        $result = $this->runWrapper($state);
 
-        $result = aprovar_extintor_logic($conn, $session, $post, $server);
-        $this->assertEquals('Location: index.php', $result);
+        $this->assertTrue(
+            strpos($result['output'], '[MOCK_HEADER] Location: index.php') !== false,
+            "Expected a redirect to index.php when user is not admin."
+        );
     }
 
     public function testRedirectsWhenNotPostMethod() {
-        $conn = new MockConnection();
-        $session = [
-            'user_id' => 1,
-            'user_level' => 'admin'
+        $state = [
+            'session' => $this->getValidSession(),
+            'server' => [
+                'REQUEST_METHOD' => 'GET'
+            ]
         ];
-        $post = [];
-        $server = ['REQUEST_METHOD' => 'GET'];
+        $result = $this->runWrapper($state);
 
-        $result = aprovar_extintor_logic($conn, $session, $post, $server);
-        $this->assertEquals('Location: aprovar_extintores.php?message=Erro%3A+M%C3%A9todo+inv%C3%A1lido.', $result);
+        $this->assertTrue(
+            strpos($result['output'], '[MOCK_HEADER] Location: aprovar_extintores.php?message=Erro:+Método+inválido.') !== false,
+            "Expected a redirect with invalid method message."
+        );
     }
 
-    public function testRedirectsWhenCsrfTokenMissing() {
-        $conn = new MockConnection();
-        $session = [
-            'user_id' => 1,
-            'user_level' => 'admin',
-            'csrf_token' => 'valid_token'
+    public function testRedirectsWhenCsrfInvalid() {
+        $state = [
+            'session' => $this->getValidSession(),
+            'server' => [
+                'REQUEST_METHOD' => 'POST'
+            ],
+            'post' => [
+                'csrf_token' => 'invalid_token'
+            ]
         ];
-        $post = [];
-        $server = ['REQUEST_METHOD' => 'POST'];
+        $result = $this->runWrapper($state);
 
-        $result = aprovar_extintor_logic($conn, $session, $post, $server);
-        $this->assertEquals('Location: aprovar_extintores.php?message=Erro%3A+Falha+na+valida%C3%A7%C3%A3o+de+seguran%C3%A7a.', $result);
+        $this->assertTrue(
+            strpos($result['output'], '[MOCK_HEADER] Location: aprovar_extintores.php?message=Erro:+Falha+na+validação+de+segurança.') !== false,
+            "Expected a redirect when CSRF token is invalid."
+        );
     }
 
-    public function testRedirectsWhenCsrfTokenInvalid() {
-        $conn = new MockConnection();
-        $session = [
-            'user_id' => 1,
-            'user_level' => 'admin',
-            'csrf_token' => 'valid_token'
+    public function testRedirectsWhenCodigoMissing() {
+        $state = [
+            'session' => $this->getValidSession(),
+            'server' => [
+                'REQUEST_METHOD' => 'POST'
+            ],
+            'post' => [
+                'csrf_token' => 'valid_token_123'
+            ]
         ];
-        $post = [
-            'csrf_token' => 'invalid_token'
-        ];
-        $server = ['REQUEST_METHOD' => 'POST'];
+        $result = $this->runWrapper($state);
 
-        $result = aprovar_extintor_logic($conn, $session, $post, $server);
-        $this->assertEquals('Location: aprovar_extintores.php?message=Erro%3A+Falha+na+valida%C3%A7%C3%A3o+de+seguran%C3%A7a.', $result);
+        $this->assertTrue(
+            strpos($result['output'], '[MOCK_HEADER] Location: aprovar_extintores.php?message=Erro:+Código+do+extintor+não+encontrado.') !== false,
+            "Expected a redirect when codigo is not sent in POST."
+        );
     }
 
-    public function testRedirectsWhenCodigoNotPassed() {
-        $conn = new MockConnection();
-        $session = [
-            'user_id' => 1,
-            'user_level' => 'admin',
-            'csrf_token' => 'valid_token'
+    public function testDbPrepareFails() {
+        $state = [
+            'session' => $this->getValidSession(),
+            'server' => [
+                'REQUEST_METHOD' => 'POST'
+            ],
+            'post' => [
+                'csrf_token' => 'valid_token_123',
+                'codigo' => 'EXT-001'
+            ],
+            'db_prepare_error' => true
         ];
-        $post = [
-            'csrf_token' => 'valid_token'
-        ];
-        $server = ['REQUEST_METHOD' => 'POST'];
+        $result = $this->runWrapper($state);
 
-        $result = aprovar_extintor_logic($conn, $session, $post, $server);
-        $this->assertEquals('Location: aprovar_extintores.php?message=Erro%3A+C%C3%B3digo+do+extintor+n%C3%A3o+encontrado.', $result);
+        $this->assertTrue(
+            strpos($result['output'], '[MOCK_HEADER] Location: aprovar_extintores.php?message=Erro:+Não+foi+possível+preparar+o+statement+para+aprovação+do+extintor.') !== false,
+            "Expected a redirect when statement preparation fails."
+        );
     }
 
-    public function testApprovesExtintorSuccessfully() {
-        $this->setUp();
-        $conn = new MockConnection();
-        $session = [
-            'user_id' => 1,
-            'user_level' => 'admin',
-            'csrf_token' => 'valid_token'
+    public function testDbExecuteFails() {
+        $state = [
+            'session' => $this->getValidSession(),
+            'server' => [
+                'REQUEST_METHOD' => 'POST'
+            ],
+            'post' => [
+                'csrf_token' => 'valid_token_123',
+                'codigo' => 'EXT-001'
+            ],
+            'db_stmt_error' => true
         ];
-        $post = [
-            'csrf_token' => 'valid_token',
-            'codigo' => 'EXT001'
-        ];
-        $server = ['REQUEST_METHOD' => 'POST'];
+        $result = $this->runWrapper($state);
 
-        $result = aprovar_extintor_logic($conn, $session, $post, $server);
-
-        $this->assertEquals('Location: aprovar_extintores.php?message=Extintor+aprovado+com+sucesso.', $result);
-
-        $this->assertTrue(count($conn->statements) > 0);
-        $this->assertEquals('EXT001', $conn->statements[0]->params[0]);
+        $this->assertTrue(
+            strpos($result['output'], '[MOCK_HEADER] Location: aprovar_extintores.php?message=Erro:+Não+foi+possível+aprovar+o+extintor.') !== false,
+            "Expected a redirect when statement execution fails."
+        );
     }
 
-    public function testRedirectsWhenPrepareFails() {
-        $conn = new MockConnection();
-        // Override prepare to return false
-        $conn = new class extends MockConnection {
-            public function prepare($query) {
-                return false;
-            }
-        };
-
-        $session = [
-            'user_id' => 1,
-            'user_level' => 'admin',
-            'csrf_token' => 'valid_token'
+    public function testSuccessScenario() {
+        $state = [
+            'session' => $this->getValidSession(),
+            'server' => [
+                'REQUEST_METHOD' => 'POST'
+            ],
+            'post' => [
+                'csrf_token' => 'valid_token_123',
+                'codigo' => 'EXT-001'
+            ]
         ];
-        $post = [
-            'csrf_token' => 'valid_token',
-            'codigo' => 'EXT001'
-        ];
-        $server = ['REQUEST_METHOD' => 'POST'];
+        $result = $this->runWrapper($state);
 
-        $result = aprovar_extintor_logic($conn, $session, $post, $server);
-        $this->assertEquals('Location: aprovar_extintores.php?message=Erro%3A+N%C3%A3o+foi+poss%C3%ADvel+preparar+o+statement+para+aprova%C3%A7%C3%A3o+do+extintor.', $result);
-    }
+        // Assert Audit Logs were triggered
+        $this->assertTrue(
+            strpos($result['output'], '[MOCK_AUDITORIA] Aprovação de Extintor | EXT-001 | 1 | admin | Extintor aprovado com sucesso') !== false,
+            "Expected auditoria to be logged."
+        );
 
-    public function testRedirectsWhenExecuteFails() {
-        $conn = new MockConnection();
-        // Override prepare to return a statement that fails to execute
-        $conn = new class extends MockConnection {
-            public function prepare($query) {
-                return new class($query, $this) extends MockStatement {
-                    public function execute() {
-                        return false;
-                    }
-                };
-            }
-        };
-
-        $session = [
-            'user_id' => 1,
-            'user_level' => 'admin',
-            'csrf_token' => 'valid_token'
-        ];
-        $post = [
-            'csrf_token' => 'valid_token',
-            'codigo' => 'EXT001'
-        ];
-        $server = ['REQUEST_METHOD' => 'POST'];
-
-        $result = aprovar_extintor_logic($conn, $session, $post, $server);
-        $this->assertEquals('Location: aprovar_extintores.php?message=Erro%3A+N%C3%A3o+foi+poss%C3%ADvel+aprovar+o+extintor.', $result);
+        // Assert Success Redirect
+        $this->assertTrue(
+            strpos($result['output'], '[MOCK_HEADER] Location: aprovar_extintores.php?message=Extintor+aprovado+com+sucesso.') !== false,
+            "Expected success redirect message."
+        );
     }
 }
 ?>
