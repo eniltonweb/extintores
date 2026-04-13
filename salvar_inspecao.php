@@ -32,6 +32,13 @@ if ($stmt->fetch()) {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $codigo = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
+
+    if (empty($_SESSION['csrf_token']) || !isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $error_msg = urlencode("Erro de validação: Token CSRF inválido.");
+        header('Location: formulario_inspecao.php?codigo=' . urlencode($codigo) . '&message=' . $error_msg);
+        exit();
+    }
+
     $Local_Exato = filter_input(INPUT_POST, 'Local_Exato', FILTER_SANITIZE_SPECIAL_CHARS); // Novo campo
     $selo_do_Inmetro = filter_input(INPUT_POST, 'selo_do_Inmetro', FILTER_SANITIZE_SPECIAL_CHARS);
     $sinalizacao_vertical = filter_input(INPUT_POST, 'sinalizacao_vertical', FILTER_SANITIZE_SPECIAL_CHARS);
