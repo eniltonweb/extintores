@@ -32,6 +32,13 @@ if ($stmt->fetch()) {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $codigo = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
+
+    if (empty($_SESSION['csrf_token']) || !isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $error_msg = urlencode("Erro de validação: Token CSRF inválido.");
+        header('Location: formulario_inspecao.php?codigo=' . urlencode($codigo) . '&message=' . $error_msg);
+        exit();
+    }
+
     $Local_Exato = filter_input(INPUT_POST, 'Local_Exato', FILTER_SANITIZE_SPECIAL_CHARS); // Novo campo
     $selo_do_Inmetro = filter_input(INPUT_POST, 'selo_do_Inmetro', FILTER_SANITIZE_SPECIAL_CHARS);
     $sinalizacao_vertical = filter_input(INPUT_POST, 'sinalizacao_vertical', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -46,13 +53,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Lidar com o upload de fotos
     $foto_nome = null;
+    $upload_warning = '';
     if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
         // Validar extensão da foto
         $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         $file_extension = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
 
         if (!in_array($file_extension, $allowed_extensions)) {
-            die("Erro: Tipo de arquivo não permitido.");
+            error_log("Upload error: Tipo de arquivo não permitido para extensão $file_extension");
+            header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . urlencode('Erro: Tipo de arquivo não permitido.'));
+            exit();
         }
 
         // Validar MIME type da foto
@@ -62,7 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $allowed_mime_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         if (!in_array($mime_type, $allowed_mime_types)) {
-            die("Erro: Tipo MIME não permitido.");
+            error_log("Upload error: Tipo MIME não permitido: $mime_type");
+            header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . urlencode('Erro: Tipo MIME não permitido.'));
+            exit();
         }
 
         // Gerar um nome de arquivo seguro e aleatório
@@ -70,7 +82,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $foto_destino = "../uploads/" . $foto_nome;
 
         if (!move_uploaded_file($foto['tmp_name'], $foto_destino)) {
-            die("Erro ao salvar a foto.");
+            error_log("Upload error: Falha ao mover arquivo enviado para $foto_destino");
+            header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . urlencode('Erro ao salvar a foto.'));
+            exit();
         }
     }
 
@@ -97,14 +111,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($stmt->execute()) {
         auditoria('Inspeção de nível 1 realizada', $codigo, $_SESSION['user_id'], $_SESSION['user_level'], 'Inspeção realizada com sucesso.');
-        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=Inspeção salva com sucesso');
+        $success_msg = urlencode('Inspeção salva com sucesso.' . $upload_warning);
+
+        $stmt->close();
+        $conn->close();
+
+        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . $success_msg);
         exit();
     } else {
-        echo "Erro ao salvar a inspeção: " . $stmt->error;
+        error_log("Erro no DB ao salvar inspeção: " . $stmt->error);
+        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . urlencode('Erro interno ao salvar a inspeção.'));
+        exit();
     }
 
-    $stmt->close();
-    $conn->close();
+        $stmt->close();
+        $conn->close();
+
+        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . $error_msg);
+        exit();
+    }
 }
 ?>
 
