@@ -9,13 +9,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
 }
 
 // Registrar a exportação no log de auditoria
-function registrar_auditoria($conn, $user_id, $action, $details) {
-    $sql = "INSERT INTO auditoria_logs (user_id, action, detalhes) VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('iss', $user_id, $action, $details);
-    $stmt->execute();
-    $stmt->close();
-}
+require_once __DIR__ . '/auditoria.php';
 
 header('Content-Type: text/html; charset=utf-8');
 header('Content-Disposition: attachment; filename=historico_inspecao_' . date('Y-m-d_H:i:s') . '.html');
