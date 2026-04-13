@@ -43,32 +43,26 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     ";
 
     $params = [];
-    $types = "";
+    $types = '';
 
     if (!empty($extintor_codigo)) {
         $sql .= " AND bd_extintores.codigo LIKE ?";
-        $params[] = "%" . $extintor_codigo . "%";
-        $types .= "s";
+        $params[] = '%' . $extintor_codigo . '%';
+        $types .= 's';
     }
 
     if (!empty($predio)) {
         $sql .= " AND bd_extintores.Predio LIKE ?";
-        $params[] = "%" . $predio . "%";
-        $types .= "s";
+        $params[] = '%' . $predio . '%';
+        $types .= 's';
     }
 
     $sql .= " ORDER BY bd_extintores.inspecao_trimestral_nivel1 DESC";
 
     $stmt = $conn->prepare($sql);
-    if ($stmt === false) {
-        error_log("Error preparing statement: " . $conn->error);
-        exit();
-    }
-
     if (!empty($params)) {
         $stmt->bind_param($types, ...$params);
     }
-
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -85,6 +79,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
                 $inspecoes_por_data[$data_inspecao]++;
             }
         }
+        $stmt->close();
     }
 
     echo json_encode(['data' => $data, 'inspecoes_por_data' => $inspecoes_por_data]);
