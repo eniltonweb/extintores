@@ -17,13 +17,13 @@ $sql = "SELECT * FROM bd_extintores WHERE dias_para_expirar_n2 <= 30";
 $result = $conn->query($sql);
 
 if ($result->num_rows > 0) {
-    $smtpHost = getenv('SMTP_HOST') ?: '';
+    $smtpHost = getenv('SMTP_HOST') ?: 'smtp.example.com';
     $smtpUser = getenv('SMTP_USER') ?: '';
     $smtpPass = getenv('SMTP_PASS') ?: '';
-    $smtpSecure = getenv('SMTP_SECURE') ?: '';
+    $smtpSecure = getenv('SMTP_SECURE') ?: 'tls';
     $smtpPort = (int)(getenv('SMTP_PORT') ?: 587);
-    $mailFrom = getenv('MAIL_FROM') ?: '';
-    $mailRecipient = getenv('MAIL_RECIPIENT') ?: '';
+    $mailFrom = getenv('MAIL_FROM') ?: 'sistema@example.com';
+    $mailRecipient = getenv('MAIL_RECIPIENT') ?: 'destinatario@example.com';
 
     $mail = new PHPMailer(true);
     try {
