@@ -21,31 +21,31 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
 
     // Build WHERE clauses
     $where_clauses = ["bd_extintores.manutencao_n2 IS NOT NULL"];
-    $params = [];
     $types = "";
+    $params = [];
 
     if (!empty($extintor_codigo)) {
         $where_clauses[] = "bd_extintores.codigo LIKE ?";
-        $params[] = "%" . $extintor_codigo . "%";
         $types .= "s";
+        $params[] = "%" . $extintor_codigo . "%";
     }
     if (!empty($predio)) {
         $where_clauses[] = "bd_extintores.Predio LIKE ?";
-        $params[] = "%" . $predio . "%";
         $types .= "s";
+        $params[] = "%" . $predio . "%";
     }
     if ($cobertura === 'SIM') {
         $where_clauses[] = "bd_extintores.cobertura = 1";
     }
     if (!empty($data_inicial)) {
         $where_clauses[] = "bd_extintores.manutencao_n2 >= ?";
-        $params[] = $data_inicial;
         $types .= "s";
+        $params[] = $data_inicial;
     }
     if (!empty($data_final)) {
         $where_clauses[] = "bd_extintores.manutencao_n2 <= ?";
-        $params[] = $data_final;
         $types .= "s";
+        $params[] = $data_final;
     }
     $where_sql = implode(" AND ", $where_clauses);
 
@@ -53,11 +53,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $sql_count = "SELECT COUNT(*) AS total FROM bd_extintores WHERE $where_sql";
     $stmt_count = $conn->prepare($sql_count);
     if (!empty($params)) {
-        $bind_params = [];
-        foreach ($params as $key => $value) {
-            $bind_params[$key] = &$params[$key];
-        }
-        $stmt_count->bind_param($types, ...$bind_params);
+        $stmt_count->bind_param($types, ...$params);
     }
     $stmt_count->execute();
     $result_count = $stmt_count->get_result();
@@ -81,11 +77,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     ";
     $stmt_chart = $conn->prepare($sql_chart);
     if (!empty($params)) {
-        $bind_params_chart = [];
-        foreach ($params as $key => $value) {
-            $bind_params_chart[$key] = &$params[$key];
-        }
-        $stmt_chart->bind_param($types, ...$bind_params_chart);
+        $stmt_chart->bind_param($types, ...$params);
     }
     $stmt_chart->execute();
     $result_chart = $stmt_chart->get_result();
@@ -114,22 +106,15 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
         ORDER BY bd_extintores.manutencao_n2 DESC
         LIMIT ? OFFSET ?
     ";
-
-    // Add limit and offset to parameters for the final query
-    $params_paginated = $params;
+    $stmt_paginated = $conn->prepare($sql_paginated);
     $types_paginated = $types . "ii";
+    $params_paginated = $params;
     $params_paginated[] = $itens_por_pagina;
     $params_paginated[] = $offset;
-
-    $stmt_paginated = $conn->prepare($sql_paginated);
-
-    $bind_params_paginated = [];
-    foreach ($params_paginated as $key => $value) {
-        $bind_params_paginated[$key] = &$params_paginated[$key];
-    }
-    $stmt_paginated->bind_param($types_paginated, ...$bind_params_paginated);
+    $stmt_paginated->bind_param($types_paginated, ...$params_paginated);
     $stmt_paginated->execute();
     $result_paginated = $stmt_paginated->get_result();
+
     $data = [];
     while ($row = $result_paginated->fetch_assoc()) {
         $data[] = $row;
