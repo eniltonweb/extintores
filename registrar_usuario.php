@@ -1,4 +1,60 @@
 <?php
+
+if (!function_exists('process_registration')) {
+    function process_registration($conn, $post_data, $session_data) {
+        // Verificar token CSRF
+        if (!isset($post_data['csrf_token']) || !isset($session_data['csrf_token']) || !hash_equals($session_data['csrf_token'], $post_data['csrf_token'])) {
+            error_log('Erro CSRF detectado.');
+            return "Erro de validação. Tente novamente.";
+        }
+
+        $username = filter_var($post_data['username'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS);
+        if (empty($post_data['password'])) {
+             return "A senha é obrigatória.";
+        }
+        $password = password_hash($post_data['password'], PASSWORD_DEFAULT);
+        $user_level = filter_var($post_data['user_level'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS);
+
+        // Verificar se o nome de usuário já existe
+        $sql_check = "SELECT id FROM usuarios WHERE username = ?";
+        $stmt_check = $conn->prepare($sql_check);
+        if ($stmt_check === false) {
+             return "Erro ao preparar a consulta de verificação: " . $conn->error;
+        }
+        $stmt_check->bind_param("s", $username);
+        $stmt_check->execute();
+        $stmt_check->store_result();
+
+        if ($stmt_check->num_rows > 0) {
+            $stmt_check->close();
+            return "Nome de usuário já existe.";
+        }
+        $stmt_check->close();
+
+        // Prevenir SQL Injection usando prepared statements
+        $sql = "INSERT INTO usuarios (username, password, nivel_acesso) VALUES (?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return "Erro ao preparar a consulta: " . $conn->error;
+        }
+
+        $stmt->bind_param("sss", $username, $password, $user_level);
+
+        if ($stmt->execute()) {
+            if (isset($session_data['user_id']) && isset($session_data['user_level'])) {
+                 auditoria('Registro de usuário', null, $session_data['user_id'], $session_data['user_level'], 'Usuário registrado com sucesso: ' . $username);
+            }
+            $message = "Usuário registrado com sucesso.";
+        } else {
+            $message = "Erro ao registrar usuário: " . $stmt->error;
+        }
+        $stmt->close();
+
+        return $message;
+    }
+}
+
+if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === realpath(__FILE__)) {
 session_start();
 require_once __DIR__ . '/config/db_conexao.php';
 // Gerar token CSRF
@@ -18,46 +74,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Verificar token CSRF
-    if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        error_log('Erro CSRF detectado em registrar_usuario.php.');
-        $message = 'Erro de validação de segurança.';
-    } else {
-        $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $user_level = filter_input(INPUT_POST, 'user_level', FILTER_SANITIZE_SPECIAL_CHARS);
-
-    // Verificar se o nome de usuário já existe
-    $sql_check = "SELECT id FROM usuarios WHERE username = ?";
-    $stmt_check = $conn->prepare($sql_check);
-    $stmt_check->bind_param("s", $username);
-    $stmt_check->execute();
-    $stmt_check->store_result();
-
-    if ($stmt_check->num_rows > 0) {
-        $message = "Nome de usuário já existe.";
-    } else {
-        // Prevenir SQL Injection usando prepared statements
-        $sql = "INSERT INTO usuarios (username, password, nivel_acesso) VALUES (?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        if ($stmt === false) {
-            error_log("Erro ao preparar a consulta: " . $conn->error);
-            $message = "Erro interno ao processar o registro.";
-        } else {
-            // Prevenir SQL Injection usando prepared statements
-            $sql = "INSERT INTO usuarios (username, password, nivel_acesso) VALUES (?, ?, ?)";
-            $stmt = $conn->prepare($sql);
-            if ($stmt === false) {
-                $message = "Erro ao preparar a consulta: " . $conn->error;
-            } else {
-                error_log("Erro ao registrar usuário: " . $stmt->error);
-                $message = "Erro interno ao processar o registro.";
-            }
-        }
-        $stmt_check->close();
-    }
-    $stmt_check->close();
-    }
+    $message = process_registration($conn, $_POST, $_SESSION);
 }
 
 // Consultar todos os usuários registrados
@@ -239,3 +256,6 @@ $conn->close();
 </script>
 </body>
 </html>
+<?php
+}
+?>
