@@ -4,6 +4,12 @@
  * We pass arguments to simulate different session states.
  */
 
+function mock_header($str, $replace = true, $http_response_code = 0) {
+    // We echo the test signal for any header to maintain parity with the old behavior
+    // that captured any "Cannot modify header information" warning.
+    echo "\n[TEST_HEADERS_SENT]\n";
+}
+
 // A custom stream wrapper to intercept `config/db_conexao.php` and provide a mock
 // database connection that always succeeds, preventing the script from exiting
 // early when the actual database is unavailable.
@@ -47,11 +53,18 @@ class MockDBStream {
             stream_wrapper_restore("file");
             if (file_exists($realPath)) {
                 $this->content = file_get_contents($realPath);
+                // Rewrite header() calls to mock_header()
+                $this->content = preg_replace('/\bheader\s*\(/i', 'mock_header(', $this->content);
             } else {
                 stream_wrapper_unregister("file");
                 stream_wrapper_register("file", "MockDBStream");
                 return false;
             }
+
+            // Rewrite header(...) calls to use our mock function to safely capture headers in CLI
+            // We use a negative lookbehind to avoid matching object method calls like `$obj->header()`
+            $this->content = preg_replace('/(?<!->|::)\bheader\s*\(/i', '\mock_header(', $this->content);
+
             // Re-register the mock wrapper
             stream_wrapper_unregister("file");
             stream_wrapper_register("file", "MockDBStream");
@@ -103,8 +116,7 @@ set_error_handler(function($errno, $errstr) use (&$captured_headers) {
         $captured_headers[] = "header_modified";
         return true;
     }
-    return false;
-});
+}
 
 // Output the detected redirect at the end so the test runner can assert on it.
 register_shutdown_function(function() use (&$captured_headers) {

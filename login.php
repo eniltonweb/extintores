@@ -13,47 +13,49 @@ $error = null; // Inicializa a variável de erro
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Verificar token CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die("Erro CSRF detectado.");
-    }
-
-    unset($_SESSION['csrf_token']); // Invalidar o token após o uso
-
-    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
-    $password = $_POST['password'];
-
-    if (empty($username) || empty($password)) {
-        $error = "Preencha todos os campos.";
+    if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        error_log("Erro CSRF detectado no login.");
+        $error = "Sessão expirada ou erro de validação. Por favor, tente novamente.";
     } else {
+        unset($_SESSION['csrf_token']); // Invalidar o token após o uso
 
-        $sql = "SELECT * FROM usuarios WHERE username = ?";
-        $stmt = $conn->prepare($sql);
+        $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
+        $password = $_POST['password'];
 
-        if (!$stmt) {
-            // Log do erro no servidor e fallback amigável para o usuário
-            error_log("Erro na preparação da consulta de login: " . $conn->error);
-            $error = "Erro interno do servidor. Tente novamente mais tarde.";
+        if (empty($username) || empty($password)) {
+            $error = "Preencha todos os campos.";
         } else {
-            $stmt->bind_param('s', $username);
-            $stmt->execute();
-            $result = $stmt->get_result();
 
-            if ($result->num_rows > 0) {
-                $user = $result->fetch_assoc();
+            $sql = "SELECT * FROM usuarios WHERE username = ?";
+            $stmt = $conn->prepare($sql);
 
-                if (password_verify($password, $user['password'])) {
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['user_level'] = $user['nivel_acesso'];
-                    $_SESSION['user_name'] = $user['username'];
-                    header('Location: index.php');
-                    exit();
+            if (!$stmt) {
+                // Log do erro no servidor e fallback amigável para o usuário
+                error_log("Erro na preparação da consulta de login: " . $conn->error);
+                $error = "Erro interno do servidor. Tente novamente mais tarde.";
+            } else {
+                $stmt->bind_param('s', $username);
+                $stmt->execute();
+                $result = $stmt->get_result();
+
+                if ($result->num_rows > 0) {
+                    $user = $result->fetch_assoc();
+
+                    if (password_verify($password, $user['password'])) {
+                        $_SESSION['user_id'] = $user['id'];
+                        $_SESSION['user_level'] = $user['nivel_acesso'];
+                        $_SESSION['user_name'] = $user['username'];
+                        header('Location: index.php');
+                        exit();
+                    } else {
+                        $error = "Credenciais inválidas.";
+                    }
                 } else {
                     $error = "Credenciais inválidas.";
                 }
-            } else {
-                $error = "Credenciais inválidas.";
+                $stmt->close();
             }
-            $stmt->close();
+        }
         }
     }
 }
