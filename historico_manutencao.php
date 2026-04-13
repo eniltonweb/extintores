@@ -21,27 +21,48 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
 
     // Build WHERE clauses
     $where_clauses = ["bd_extintores.manutencao_n2 IS NOT NULL"];
+    $params = [];
+    $types = "";
+
     if (!empty($extintor_codigo)) {
-        $where_clauses[] = "bd_extintores.codigo LIKE '%" . $conn->real_escape_string($extintor_codigo) . "%'";
+        $where_clauses[] = "bd_extintores.codigo LIKE ?";
+        $params[] = "%" . $extintor_codigo . "%";
+        $types .= "s";
     }
     if (!empty($predio)) {
-        $where_clauses[] = "bd_extintores.Predio LIKE '%" . $conn->real_escape_string($predio) . "%'";
+        $where_clauses[] = "bd_extintores.Predio LIKE ?";
+        $params[] = "%" . $predio . "%";
+        $types .= "s";
     }
     if ($cobertura === 'SIM') {
         $where_clauses[] = "bd_extintores.cobertura = 1";
     }
     if (!empty($data_inicial)) {
-        $where_clauses[] = "bd_extintores.manutencao_n2 >= '" . $conn->real_escape_string($data_inicial) . "'";
+        $where_clauses[] = "bd_extintores.manutencao_n2 >= ?";
+        $params[] = $data_inicial;
+        $types .= "s";
     }
     if (!empty($data_final)) {
-        $where_clauses[] = "bd_extintores.manutencao_n2 <= '" . $conn->real_escape_string($data_final) . "'";
+        $where_clauses[] = "bd_extintores.manutencao_n2 <= ?";
+        $params[] = $data_final;
+        $types .= "s";
     }
     $where_sql = implode(" AND ", $where_clauses);
 
     // 1. Contar total de registros para a paginação
     $sql_count = "SELECT COUNT(*) AS total FROM bd_extintores WHERE $where_sql";
-    $result_count = $conn->query($sql_count);
+    $stmt_count = $conn->prepare($sql_count);
+    if (!empty($params)) {
+        $bind_params = [];
+        foreach ($params as $key => $value) {
+            $bind_params[$key] = &$params[$key];
+        }
+        $stmt_count->bind_param($types, ...$bind_params);
+    }
+    $stmt_count->execute();
+    $result_count = $stmt_count->get_result();
     $total_registros = $result_count->fetch_assoc()['total'];
+    $stmt_count->close();
 
     $itens_por_pagina = 20;
     $total_paginas = ceil($total_registros / $itens_por_pagina);
@@ -58,11 +79,21 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
         GROUP BY manutencao_n2
         ORDER BY manutencao_n2 ASC
     ";
-    $result_chart = $conn->query($sql_chart);
+    $stmt_chart = $conn->prepare($sql_chart);
+    if (!empty($params)) {
+        $bind_params_chart = [];
+        foreach ($params as $key => $value) {
+            $bind_params_chart[$key] = &$params[$key];
+        }
+        $stmt_chart->bind_param($types, ...$bind_params_chart);
+    }
+    $stmt_chart->execute();
+    $result_chart = $stmt_chart->get_result();
     $manutencoes_por_data = [];
     while ($row_chart = $result_chart->fetch_assoc()) {
         $manutencoes_por_data[$row_chart['data_manutencao']] = (int)$row_chart['total'];
     }
+    $stmt_chart->close();
 
     // 3. Buscar dados paginados para a tabela
     $sql_paginated = "
@@ -81,13 +112,29 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
         WHERE 
             $where_sql
         ORDER BY bd_extintores.manutencao_n2 DESC
-        LIMIT $itens_por_pagina OFFSET $offset
+        LIMIT ? OFFSET ?
     ";
-    $result_paginated = $conn->query($sql_paginated);
+
+    // Add limit and offset to parameters for the final query
+    $params_paginated = $params;
+    $types_paginated = $types . "ii";
+    $params_paginated[] = $itens_por_pagina;
+    $params_paginated[] = $offset;
+
+    $stmt_paginated = $conn->prepare($sql_paginated);
+
+    $bind_params_paginated = [];
+    foreach ($params_paginated as $key => $value) {
+        $bind_params_paginated[$key] = &$params_paginated[$key];
+    }
+    $stmt_paginated->bind_param($types_paginated, ...$bind_params_paginated);
+    $stmt_paginated->execute();
+    $result_paginated = $stmt_paginated->get_result();
     $data = [];
     while ($row = $result_paginated->fetch_assoc()) {
         $data[] = $row;
     }
+    $stmt_paginated->close();
 
     header('Content-Type: application/json');
     echo json_encode([

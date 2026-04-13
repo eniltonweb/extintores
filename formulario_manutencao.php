@@ -115,6 +115,7 @@ if ($codigo) {
 
 <?php if ($show_form): ?>
     <form method="POST" action="salvar_manutencao.php">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
         <input type="hidden" name="codigo" value="<?php echo htmlspecialchars($codigo); ?>">
         <div class="form-check">
             <input type="checkbox" class="form-check-input" id="manutencao_n2" name="manutencao_n2" value="1">
