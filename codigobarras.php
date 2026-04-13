@@ -3,18 +3,17 @@ session_start();
 require_once __DIR__ . '/config/db_conexao.php';
 include 'auditoria.php';
 
-$error_message = '';
+$error_message = null;
 
 if (!isset($_GET['codigo'])) {
     $error_message = 'Código de barras não fornecido.';
-    error_log($error_message);
+    error_log('codigobarras.php erro: ' . $error_message);
 } else {
-    $codigo = $_GET['codigo']; // will be sanitized below if needed
+    $codigo = htmlspecialchars($_GET['codigo']);
     if (!preg_match('/^[a-zA-Z0-9\-]+$/', $codigo)) {
         $error_message = 'Código inválido.';
-        error_log($error_message);
+        error_log('codigobarras.php erro: ' . $error_message . ' | Input: ' . $_GET['codigo']);
     }
-    $codigo = htmlspecialchars($codigo);
 }
 
 $user_level = isset($_SESSION['user_level']) ? $_SESSION['user_level'] : null;
@@ -25,9 +24,9 @@ header("Content-Security-Policy: default-src 'self'; img-src 'self' http://www.e
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 
+// Consulta para obter as informações do extintor e o nome do usuário que fez a última inspeção de nível 1
 $result = null;
-if (empty($error_message)) {
-    // Consulta para obter as informações do extintor e o nome do usuário que fez a última inspeção de nível 1
+if (!isset($error_message)) {
     $sql = "
         SELECT e.*,
                e.usuario AS usuario_inspecao_nivel1,
@@ -37,9 +36,11 @@ if (empty($error_message)) {
         LIMIT 1";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('s', $codigo);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    if ($stmt) {
+        $stmt->bind_param('s', $codigo);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    }
 }
 
 ?>
@@ -82,7 +83,7 @@ if ($user_level == 'admin') {
 ?>
 <div class="container mt-4">
 <?php
-if (!empty($error_message)) {
+if (isset($error_message)) {
     echo "<div class='alert alert-danger'>" . htmlspecialchars($error_message) . "</div>";
 } elseif ($result) {
     if ($result->num_rows > 0) {
@@ -157,7 +158,7 @@ if (!empty($error_message)) {
     } else {
         echo "<div class='alert alert-warning'>Nenhum extintor encontrado com o código fornecido.</div>";
     }
-} else {
+} elseif (!isset($error_message) && isset($stmt) && $stmt) {
     echo "<div class='alert alert-danger'>Erro ao executar a consulta: " . $stmt->error . "</div>";
 }
 

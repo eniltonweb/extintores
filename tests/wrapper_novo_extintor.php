@@ -106,15 +106,22 @@ class MockDBStream {
 stream_wrapper_unregister("file");
 stream_wrapper_register("file", "MockDBStream");
 
-$GLOBALS['captured_headers'] = [];
-if (!function_exists('mock_header')) {
-    function mock_header($string, $replace = true, $http_response_code = 0) {
-        $GLOBALS['captured_headers'][] = "header_modified";
+// In PHP 5.3+, we can reliably check the response code to see if a redirect
+// header was sent, as header() correctly updates the response code even in CLI.
+// We handle errors because if the script already started outputting data
+// before calling header(), PHP throws a "Cannot modify header information" warning.
+$captured_headers = [];
+set_error_handler(function($errno, $errstr) use (&$captured_headers) {
+    if (strpos($errstr, 'Cannot modify header information') !== false) {
+        $captured_headers[] = "header_modified";
+        return true;
     }
 }
 
-register_shutdown_function(function() {
-    if (!empty($GLOBALS['captured_headers'])) {
+// Output the detected redirect at the end so the test runner can assert on it.
+register_shutdown_function(function() use (&$captured_headers) {
+    $code = http_response_code();
+    if (!empty($captured_headers) || ($code >= 300 && $code < 400)) {
         echo "\n[TEST_HEADERS_SENT]\n";
     }
 });

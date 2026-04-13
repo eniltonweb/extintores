@@ -18,11 +18,11 @@ $result = $conn->query($sql);
 
 if ($result->num_rows > 0) {
     $smtpHost = getenv('SMTP_HOST') ?: 'smtp.example.com';
-    $smtpUser = getenv('SMTP_USER') ?: 'seu_email@example.com';
-    $smtpPass = getenv('SMTP_PASS') ?: 'sua_senha';
+    $smtpUser = getenv('SMTP_USER') ?: '';
+    $smtpPass = getenv('SMTP_PASS') ?: '';
     $smtpSecure = getenv('SMTP_SECURE') ?: 'tls';
     $smtpPort = (int)(getenv('SMTP_PORT') ?: 587);
-    $mailFrom = getenv('MAIL_FROM') ?: 'seu_email@example.com';
+    $mailFrom = getenv('MAIL_FROM') ?: 'sistema@example.com';
     $mailRecipient = getenv('MAIL_RECIPIENT') ?: 'destinatario@example.com';
 
     $mail = new PHPMailer(true);
@@ -38,23 +38,28 @@ if ($result->num_rows > 0) {
         $mail->setFrom($mailFrom, 'Sistema de Manutenção');
         $mail->isHTML(true);
 
+        $mensagens = [];
+        $codigos = [];
+
         $alertas = [];
         while ($row = $result->fetch_assoc()) {
-            $alertas[] = '<li>O extintor com código <strong>' . htmlspecialchars($row['codigo']) . '</strong> está com manutenção pendente. Próxima manutenção: ' . htmlspecialchars($row['proxima_manutencao_n2']) . '</li>';
+            $mensagens[] = "O extintor com código {$row['codigo']} está com manutenção pendente. Próxima manutenção: {$row['proxima_manutencao_n2']}";
+            $codigos[] = $row['codigo'];
         }
 
-        if (!empty($alertas)) {
+        if (!empty($mensagens)) {
             try {
                 $mail->addAddress($mailRecipient);
-                $mail->Subject = 'Resumo de Alertas de Manutenção Pendente';
-                $mail->Body = '<h3>Alertas de Manutenção Pendente</h3><ul>' . implode('', $alertas) . '</ul>';
+                $mail->Subject = 'Alerta de Manutenção Pendente';
+                $mail->Body = implode('<br><br>', $mensagens);
 
                 $mail->send();
-                echo 'Resumo de alertas enviado com sucesso.<br>';
+
+                foreach ($codigos as $codigo) {
+                    echo 'Mensagem enviada para ' . $codigo . '<br>';
+                }
             } catch (Exception $e) {
-                echo "O resumo de alertas não pôde ser enviado. Erro: {$mail->ErrorInfo}";
-            } finally {
-                $mail->clearAddresses();
+                echo "A mensagem não pôde ser enviada. Erro: {$mail->ErrorInfo}";
             }
         }
     } catch (Exception $e) {

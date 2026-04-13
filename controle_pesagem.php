@@ -60,11 +60,8 @@ if (!isset($_SESSION['nome_usuario'])){
 
             if ($resultado) {
               while($linha = $resultado->fetch_assoc()){
-                $option = "<option value='{$linha['id']}'>{$linha['codigo']}</option>";
-                if ($fp) {
-                  fwrite($fp, $option);
-                }
-                echo $option;
+                $linha = array_map('htmlspecialchars', $linha);
+                $options[] = "<option value='{$linha['id']}'>{$linha['codigo']}</option>";
               }
               if ($fp) {
                 fclose($fp);
@@ -107,15 +104,21 @@ if (!isset($_SESSION['nome_usuario'])){
       <?php
       $pesagens = $conn->query("SELECT p.*, e.codigo FROM pesagens_extintores p INNER JOIN bd_extintores e ON p.id_extintor = e.id ORDER BY p.data_pesagem DESC");
       while($pesagem = $pesagens->fetch_assoc()){
+        $pesagem = array_map('htmlspecialchars', $pesagem);
         $situacao = $pesagem['situacao'] == 'Aprovado' ? '✅ OK' : '❌ NOK';
+        $codigo = htmlspecialchars($pesagem['codigo'] ?? '', ENT_QUOTES, 'UTF-8');
+        $peso_aferido = htmlspecialchars((string)($pesagem['peso_aferido'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $percentual_perda = htmlspecialchars((string)($pesagem['percentual_perda'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $usuario = htmlspecialchars($pesagem['usuario'] ?? '', ENT_QUOTES, 'UTF-8');
+
         echo "<tr>
-          <td>{$pesagem['codigo']}</td>
-          <td>{$pesagem['peso_aferido']} kg</td>
-          <td>{$pesagem['percentual_perda']}%</td>
+          <td>{$codigo}</td>
+          <td>{$peso_aferido} kg</td>
+          <td>{$percentual_perda}%</td>
           <td>{$situacao}</td>
           <td>".date('d/m/Y', strtotime($pesagem['data_pesagem']))."</td>
           <td>".date('d/m/Y', strtotime($pesagem['proxima_pesagem']))."</td>
-          <td>{$pesagem['usuario']}</td>
+          <td>{$usuario}</td>
         </tr>";
       }
       ?>
