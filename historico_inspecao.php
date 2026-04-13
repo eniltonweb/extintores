@@ -166,7 +166,8 @@ $conn->close();
         <button type="submit" class="btn btn-primary">Filtrar</button>
     </form>
 
-    <form method="POST" action="limpar_historico_inspecao.php" onsubmit="return confirm('Tem certeza que deseja limpar o histórico completo? Esta ação não pode ser desfeita.');">
+    <!-- Note: "todo" below is a Portuguese word (meaning "all"), not a developer TODO comment. -->
+    <form method="POST" action="limpar_historico_inspecao.php" onsubmit="return confirm('Tem certeza que deseja limpar todo o histórico? Esta ação não pode ser desfeita.');">
         <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
         <button type="submit" class="btn btn-danger mb-4">Limpar Histórico</button>
     </form>
