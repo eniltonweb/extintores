@@ -142,6 +142,7 @@ if ($predio) {
 
     <?php if ($show_form): ?>
         <form method="POST" action="salvar_inspecao.php" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
             <input type="hidden" name="codigo" value="<?php echo htmlspecialchars($codigo); ?>">
 
             <label for="Local_Exato">Local Exato:</label>

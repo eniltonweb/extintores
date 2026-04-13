@@ -18,9 +18,12 @@ class MockPHPMailer extends PHPMailer {
 function benchmark($iterations, $optimize = false) {
     $start = microtime(true);
 
+    // Environment variables configured without fallback string values for sensitive secrets
+    // to prevent automated security scans from flagging them as hardcoded vulnerabilities.
+    // Ensure these variables are provided by the environment during execution.
     $smtpHost = getenv('SMTP_HOST') ?: 'smtp.example.com';
     $smtpUser = getenv('SMTP_USER') ?: 'seu_email@example.com';
-    $smtpPass = getenv('SMTP_PASS') ?: 'sua_senha';
+    $smtpPass = getenv('SMTP_PASS') ?: '';
     $smtpSecure = getenv('SMTP_SECURE') ?: 'tls';
     $smtpPort = (int)(getenv('SMTP_PORT') ?: 587);
     $mailFrom = getenv('MAIL_FROM') ?: 'seu_email@example.com';
