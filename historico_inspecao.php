@@ -42,17 +42,33 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
             AND bd_extintores.inspecao_trimestral_nivel1 >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
     ";
 
+    $params = [];
+    $types = "";
+
     if (!empty($extintor_codigo)) {
-        $sql .= " AND bd_extintores.codigo LIKE '%" . $conn->real_escape_string($extintor_codigo) . "%'";
+        $sql .= " AND bd_extintores.codigo LIKE ?";
+        $params[] = "%" . $extintor_codigo . "%";
+        $types .= "s";
     }
 
     if (!empty($predio)) {
-        $sql .= " AND bd_extintores.Predio LIKE '%" . $conn->real_escape_string($predio) . "%'";
+        $sql .= " AND bd_extintores.Predio LIKE ?";
+        $params[] = "%" . $predio . "%";
+        $types .= "s";
     }
 
     $sql .= " ORDER BY bd_extintores.inspecao_trimestral_nivel1 DESC";
 
-    $result = $conn->query($sql);
+    $stmt = $conn->prepare($sql);
+    if (!empty($params)) {
+        $bind_params = [];
+        foreach ($params as $key => $value) {
+            $bind_params[$key] = &$params[$key];
+        }
+        $stmt->bind_param($types, ...$bind_params);
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     $data = [];
     $inspecoes_por_data = [];
@@ -150,7 +166,7 @@ $conn->close();
         <button type="submit" class="btn btn-primary">Filtrar</button>
     </form>
 
-    <form method="POST" action="limpar_historico_inspecao.php" onsubmit="return confirm('Tem certeza que deseja limpar todo o histórico? Esta ação não pode ser desfeita.');">
+    <form method="POST" action="limpar_historico_inspecao.php" onsubmit="return confirm('Tem certeza que deseja limpar o histórico completo? Esta ação não pode ser desfeita.');">
         <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
         <button type="submit" class="btn btn-danger mb-4">Limpar Histórico</button>
     </form>
