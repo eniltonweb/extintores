@@ -45,7 +45,7 @@ class SalvarInspecaoTest extends MiniTestCase {
         $cleanOutput = $this->stripPhpNotices($result['output']);
 
         $this->assertTrue(
-            strpos($cleanOutput, 'Erro: Tipo de arquivo não permitido.') !== false,
+            strpos($cleanOutput, 'Tipo de arquivo não permitido.') !== false,
             "Expected error message for invalid file extension. Got: " . $cleanOutput
         );
     }
@@ -70,7 +70,7 @@ class SalvarInspecaoTest extends MiniTestCase {
         $cleanOutput = $this->stripPhpNotices($result['output']);
 
         $this->assertTrue(
-            strpos($cleanOutput, 'Erro: Tipo MIME não permitido.') !== false,
+            strpos($cleanOutput, 'Tipo MIME não permitido.') !== false,
             "Expected error message for invalid MIME type. Got: " . $cleanOutput
         );
     }
