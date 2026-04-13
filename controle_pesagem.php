@@ -53,16 +53,25 @@ if (!isset($_SESSION['nome_usuario'])){
             echo file_get_contents($cacheFile);
           } else {
             $resultado = $conn->query("SELECT id, codigo FROM bd_extintores WHERE tip_extintor='CO2'");
-            $options = [];
+
+            // Generate a temporary file to avoid partial reads/writes
+            $tempFile = dirname($cacheFile) . '/.tmp_co2_extintores_' . uniqid() . '.html';
+            $fp = @fopen($tempFile, 'w');
+
             if ($resultado) {
               while($linha = $resultado->fetch_assoc()){
                 $linha = array_map('htmlspecialchars', $linha);
                 $options[] = "<option value='{$linha['id']}'>{$linha['codigo']}</option>";
               }
+              if ($fp) {
+                fclose($fp);
+                // Atomic write for cache file
+                rename($tempFile, $cacheFile);
+              }
+            } elseif ($fp) {
+                fclose($fp);
+                unlink($tempFile);
             }
-            $html = implode('', $options);
-            file_put_contents($cacheFile, $html);
-            echo $html;
           }
         ?>
       </select>
@@ -97,14 +106,19 @@ if (!isset($_SESSION['nome_usuario'])){
       while($pesagem = $pesagens->fetch_assoc()){
         $pesagem = array_map('htmlspecialchars', $pesagem);
         $situacao = $pesagem['situacao'] == 'Aprovado' ? '✅ OK' : '❌ NOK';
+        $codigo = htmlspecialchars($pesagem['codigo'] ?? '', ENT_QUOTES, 'UTF-8');
+        $peso_aferido = htmlspecialchars((string)($pesagem['peso_aferido'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $percentual_perda = htmlspecialchars((string)($pesagem['percentual_perda'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $usuario = htmlspecialchars($pesagem['usuario'] ?? '', ENT_QUOTES, 'UTF-8');
+
         echo "<tr>
-          <td>{$pesagem['codigo']}</td>
-          <td>{$pesagem['peso_aferido']} kg</td>
-          <td>{$pesagem['percentual_perda']}%</td>
+          <td>{$codigo}</td>
+          <td>{$peso_aferido} kg</td>
+          <td>{$percentual_perda}%</td>
           <td>{$situacao}</td>
           <td>".date('d/m/Y', strtotime($pesagem['data_pesagem']))."</td>
           <td>".date('d/m/Y', strtotime($pesagem['proxima_pesagem']))."</td>
-          <td>{$pesagem['usuario']}</td>
+          <td>{$usuario}</td>
         </tr>";
       }
       ?>
