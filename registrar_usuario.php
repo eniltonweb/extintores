@@ -19,11 +19,11 @@ $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Verificar token CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die('Erro CSRF detectado.');
-    }
-
-    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
+    if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        error_log('Erro CSRF detectado em registrar_usuario.php.');
+        $message = 'Erro de validação de segurança.';
+    } else {
+        $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $user_level = filter_input(INPUT_POST, 'user_level', FILTER_SANITIZE_SPECIAL_CHARS);
 
@@ -41,20 +41,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $sql = "INSERT INTO usuarios (username, password, nivel_acesso) VALUES (?, ?, ?)";
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
-            $message = "Erro ao preparar a consulta: " . $conn->error;
+            error_log("Erro ao preparar a consulta: " . $conn->error);
+            $message = "Erro interno ao processar o registro.";
         } else {
-            $stmt->bind_param("sss", $username, $password, $user_level);
-
-            if ($stmt->execute()) {
-                auditoria('Registro de usuário', null, $_SESSION['user_id'], $_SESSION['user_level'], 'Usuário registrado com sucesso: ' . $username);
-                $message = "Usuário registrado com sucesso.";
+            // Prevenir SQL Injection usando prepared statements
+            $sql = "INSERT INTO usuarios (username, password, nivel_acesso) VALUES (?, ?, ?)";
+            $stmt = $conn->prepare($sql);
+            if ($stmt === false) {
+                $message = "Erro ao preparar a consulta: " . $conn->error;
             } else {
-                $message = "Erro ao registrar usuário: " . $stmt->error;
+                error_log("Erro ao registrar usuário: " . $stmt->error);
+                $message = "Erro interno ao processar o registro.";
             }
-            $stmt->close();
         }
+        $stmt_check->close();
     }
     $stmt_check->close();
+    }
 }
 
 // Consultar todos os usuários registrados

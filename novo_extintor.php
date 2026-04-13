@@ -50,6 +50,7 @@ $result_predios = $conn->query($sql_predios);
 <div class="container mt-4">
     <h2>Adicionar Novo Extintor</h2>
     <form method="POST" action="salvar_novo_extintor.php" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
         <label for="novo_predio">Prédio:</label>
         <select id="novo_predio" name="novo_predio" required onchange="gerarCodigoNovoExtintor()">
             <option value="">Selecione um Prédio</option>

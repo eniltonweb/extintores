@@ -32,6 +32,13 @@ if ($stmt->fetch()) {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $codigo = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
+
+    if (empty($_SESSION['csrf_token']) || !isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $error_msg = urlencode("Erro de validação: Token CSRF inválido.");
+        header('Location: formulario_inspecao.php?codigo=' . urlencode($codigo) . '&message=' . $error_msg);
+        exit();
+    }
+
     $Local_Exato = filter_input(INPUT_POST, 'Local_Exato', FILTER_SANITIZE_SPECIAL_CHARS); // Novo campo
     $selo_do_Inmetro = filter_input(INPUT_POST, 'selo_do_Inmetro', FILTER_SANITIZE_SPECIAL_CHARS);
     $sinalizacao_vertical = filter_input(INPUT_POST, 'sinalizacao_vertical', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -46,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Lidar com o upload de fotos
     $foto_nome = null;
+    $upload_warning = '';
     if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
         // Validar extensão da foto
         $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
@@ -103,14 +111,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($stmt->execute()) {
         auditoria('Inspeção de nível 1 realizada', $codigo, $_SESSION['user_id'], $_SESSION['user_level'], 'Inspeção realizada com sucesso.');
-        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=Inspeção salva com sucesso');
+        $success_msg = urlencode('Inspeção salva com sucesso.' . $upload_warning);
+
+        $stmt->close();
+        $conn->close();
+
+        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . $success_msg);
         exit();
     } else {
-        echo "Erro ao salvar a inspeção: " . $stmt->error;
+        error_log("Erro no DB ao salvar inspeção: " . $stmt->error);
+        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . urlencode('Erro interno ao salvar a inspeção.'));
+        exit();
     }
 
-    $stmt->close();
-    $conn->close();
+        $stmt->close();
+        $conn->close();
+
+        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . $error_msg);
+        exit();
+    }
 }
 ?>
 
