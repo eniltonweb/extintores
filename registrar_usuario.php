@@ -19,11 +19,12 @@ $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Verificar token CSRF
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die('Erro CSRF detectado.');
-    }
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        error_log('Erro CSRF detectado.');
+        $message = "Erro de validação. Tente novamente.";
+    } else {
 
-    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
+        $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $user_level = filter_input(INPUT_POST, 'user_level', FILTER_SANITIZE_SPECIAL_CHARS);
 
@@ -55,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
     $stmt_check->close();
+    }
 }
 
 // Consultar todos os usuários registrados

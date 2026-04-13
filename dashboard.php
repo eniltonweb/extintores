@@ -1,40 +1,85 @@
 <?php
 session_start();
-require_once __DIR__ . '/config/db_conexao.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
 
-// Consultar dados de manutenções realizadas
-$sql_manutencao = "SELECT tipo_manutencao, COUNT(*) AS total FROM historico_manutencao GROUP BY tipo_manutencao";
-$result_manutencao = $conn->query($sql_manutencao);
+$cacheDir = __DIR__ . '/cache';
+$cacheFile = $cacheDir . '/dashboard_data.json';
+$cacheTime = 3600; // 1 hour cache
 
-$manutencoes = [];
-while ($row = $result_manutencao->fetch_assoc()) {
-    $manutencoes[] = $row;
+if (!is_dir($cacheDir)) {
+    mkdir($cacheDir, 0755, true);
 }
 
-// Consultar dados de próximas manutenções
-$sql_proximas = "SELECT proxima_manutencao_n2, COUNT(*) AS total FROM bd_extintores WHERE proxima_manutencao_n2 IS NOT NULL GROUP BY proxima_manutencao_n2";
-$result_proximas = $conn->query($sql_proximas);
-
-$proximas_manutencoes = [];
-while ($row = $result_proximas->fetch_assoc()) {
-    $proximas_manutencoes[] = $row;
+$dashboard_data = null;
+if (file_exists($cacheFile) && (time() - filemtime($cacheFile) < $cacheTime)) {
+    $content = file_get_contents($cacheFile);
+    if ($content !== false) {
+        $dashboard_data = json_decode($content, true);
+    }
 }
 
-// Consultar dados de tipos de extintores
-$sql_extintores = "SELECT tip_extintor, COUNT(*) AS total FROM bd_extintores GROUP BY tip_extintor";
-$result_extintores = $conn->query($sql_extintores);
+if (!is_array($dashboard_data)) {
+    require_once __DIR__ . '/config/db_conexao.php';
 
-$extintores = [];
-while ($row = $result_extintores->fetch_assoc()) {
-    $extintores[] = $row;
+    // Consultar dados de manutenções realizadas
+    $sql_manutencao = "SELECT tipo_manutencao, COUNT(*) AS total FROM historico_manutencao GROUP BY tipo_manutencao";
+    $result_manutencao = $conn->query($sql_manutencao);
+
+    $manutencoes = [];
+    if ($result_manutencao) {
+        while ($row = $result_manutencao->fetch_assoc()) {
+            $manutencoes[] = $row;
+        }
+    }
+
+    // Consultar dados de próximas manutenções
+    $sql_proximas = "SELECT proxima_manutencao_n2, COUNT(*) AS total FROM bd_extintores WHERE proxima_manutencao_n2 IS NOT NULL GROUP BY proxima_manutencao_n2";
+    $result_proximas = $conn->query($sql_proximas);
+
+    $proximas_manutencoes = [];
+    if ($result_proximas) {
+        while ($row = $result_proximas->fetch_assoc()) {
+            $proximas_manutencoes[] = $row;
+        }
+    }
+
+    // Consultar dados de tipos de extintores
+    $sql_extintores = "SELECT tip_extintor, COUNT(*) AS total FROM bd_extintores GROUP BY tip_extintor";
+    $result_extintores = $conn->query($sql_extintores);
+
+    $extintores = [];
+    if ($result_extintores) {
+        while ($row = $result_extintores->fetch_assoc()) {
+            $extintores[] = $row;
+        }
+    }
+
+    $dashboard_data = [
+        'manutencoes' => $manutencoes,
+        'proximas_manutencoes' => $proximas_manutencoes,
+        'extintores' => $extintores
+    ];
+
+    // Atomic write to prevent race conditions
+    $tempFile = tempnam($cacheDir, 'dash_');
+    if ($tempFile) {
+        file_put_contents($tempFile, json_encode($dashboard_data));
+        chmod($tempFile, 0644);
+        rename($tempFile, $cacheFile);
+    }
 }
 
-$conn->close();
+$manutencoes = $dashboard_data['manutencoes'] ?? [];
+$proximas_manutencoes = $dashboard_data['proximas_manutencoes'] ?? [];
+$extintores = $dashboard_data['extintores'] ?? [];
+
+if (isset($conn) && $conn instanceof mysqli) {
+    $conn->close();
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">

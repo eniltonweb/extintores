@@ -1,45 +1,8 @@
 <?php
-// Mock classes for testing
-class MockStmtExportarInspecaoNok {
-    public $sql;
-    public $bind_types;
-    public $bind_vars;
-    public $execute_called = false;
-    public $close_called = false;
-
-    public function __construct($sql) {
-        $this->sql = $sql;
-    }
-
-    public function bind_param($types, ...$vars) {
-        $this->bind_types = $types;
-        $this->bind_vars = $vars;
-        return true;
-    }
-
-    public function execute() {
-        $this->execute_called = true;
-        return true;
-    }
-
-    public function close() {
-        $this->close_called = true;
-        return true;
-    }
-}
-
-class MockConnExportarInspecaoNok {
-    public $last_stmt = null;
-
-    public function prepare($sql) {
-        $this->last_stmt = new MockStmtExportarInspecaoNok($sql);
-        return $this->last_stmt;
-    }
-}
-
 // Override $_SERVER variables so exportar_inspecao_nok.php does not execute its global scope logic
 $_SERVER['SCRIPT_FILENAME'] = 'phpunit.php';
 
+require_once __DIR__ . '/MockDatabase.php';
 require_once __DIR__ . '/../exportar_inspecao_nok.php';
 // If it was already defined (e.g. by ExportarDadosTest), we can still test it,
 // but we must be sure we are testing the right one.
@@ -47,7 +10,7 @@ require_once __DIR__ . '/../exportar_inspecao_nok.php';
 
 class ExportarInspecaoNokTest extends MiniTestCase {
     public function testRegistrarAuditoriaExecutesCorrectSqlAndBindsParams() {
-        $conn = new MockConnExportarInspecaoNok();
+        $conn = new MockConnection();
         $user_id = 99;
         $action = 'Test Action';
         $details = 'Test Details';
@@ -57,18 +20,75 @@ class ExportarInspecaoNokTest extends MiniTestCase {
 
         // Verify that prepare was called with the correct SQL
         $expected_sql = "INSERT INTO auditoria_logs (user_id, action, detalhes) VALUES (?, ?, ?)";
-        $this->assertTrue($conn->last_stmt !== null, "prepare() should be called and return a statement");
-        $this->assertEquals($expected_sql, $conn->last_stmt->sql, "prepare() should be called with correct SQL");
+        $this->assertTrue(in_array($expected_sql, $conn->queries), "prepare() should be called with correct SQL");
+        $stmt = $conn->statements[0];
 
         // Verify bind_param
-        $this->assertEquals('iss', $conn->last_stmt->bind_types, "bind_param should use 'iss' types");
-        $this->assertEquals(3, count($conn->last_stmt->bind_vars), "bind_param should receive 3 variables");
-        $this->assertEquals($user_id, $conn->last_stmt->bind_vars[0], "First variable should be user_id");
-        $this->assertEquals($action, $conn->last_stmt->bind_vars[1], "Second variable should be action");
-        $this->assertEquals($details, $conn->last_stmt->bind_vars[2], "Third variable should be details");
+        $this->assertEquals('iss', $stmt->types, "bind_param should use 'iss' types");
+        $this->assertEquals(3, count($stmt->params), "bind_param should receive 3 variables");
+        $this->assertEquals($user_id, $stmt->params[0], "First variable should be user_id");
+        $this->assertEquals($action, $stmt->params[1], "Second variable should be action");
+        $this->assertEquals($details, $stmt->params[2], "Third variable should be details");
 
         // Verify execution and close
-        $this->assertTrue($conn->last_stmt->execute_called, "execute() should be called on the statement");
-        $this->assertTrue($conn->last_stmt->close_called, "close() should be called on the statement");
+        $this->assertTrue($stmt->executed, "execute() should be called on the statement");
+        $this->assertTrue($stmt->closed, "close() should be called on the statement");
+    }
+
+    public function testRegistrarAuditoriaHandlesPrepareFailureGracefully() {
+        // Create a mock connection that returns false on prepare
+        $conn = new class extends MockConnection {
+            public $error = "Mock prepare error";
+            public function prepare($query) {
+                return false;
+            }
+        };
+
+        $user_id = 101;
+        $action = 'Fail Action';
+        $details = 'Fail Details';
+
+        // Call the function; it should log an error and not crash (no fatal error)
+        registrar_auditoria($conn, $user_id, $action, $details);
+
+        // If it reaches here without a fatal error, the test passes.
+        $this->assertTrue(true, "registrar_auditoria should handle prepare failure gracefully");
+    }
+
+    public function testRegistrarAuditoriaHandlesExecuteFailure() {
+        // Create a mock connection where execute returns false
+        $conn = new MockConnection();
+        $stmt_mock = new class("mock query", $conn) extends MockStatement {
+            public function execute() {
+                return false;
+            }
+        };
+
+        $conn = new class($stmt_mock) extends MockConnection {
+            public $stmt_mock;
+            public function __construct($stmt_mock) {
+                $this->stmt_mock = $stmt_mock;
+            }
+            public function prepare($query) {
+                $this->queries[] = $query;
+                $this->statements[] = $this->stmt_mock;
+                return $this->stmt_mock;
+            }
+        };
+
+        $user_id = 102;
+        $action = 'Exec Fail Action';
+        $details = 'Exec Fail Details';
+
+        // Call the function
+        registrar_auditoria($conn, $user_id, $action, $details);
+
+        $stmt = $conn->statements[0];
+
+        $this->assertEquals('iss', $stmt->types, "bind_param should use 'iss' types");
+        $this->assertEquals(3, count($stmt->params), "bind_param should receive 3 variables");
+
+        // Execute failure should be handled or at least not crash
+        $this->assertTrue($stmt->closed, "close() should still be called even if execute fails, or at least no fatal error");
     }
 }
