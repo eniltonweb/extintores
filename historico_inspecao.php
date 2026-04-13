@@ -75,13 +75,15 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $data = [];
     $inspecoes_por_data = [];
 
-    while ($row = $result->fetch_assoc()) {
-        $data[] = $row;
-        $data_inspecao = $row['data_inspecao'];
-        if (!isset($inspecoes_por_data[$data_inspecao])) {
-            $inspecoes_por_data[$data_inspecao] = 1;
-        } else {
-            $inspecoes_por_data[$data_inspecao]++;
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $data[] = $row;
+            $data_inspecao = $row['data_inspecao'];
+            if (!isset($inspecoes_por_data[$data_inspecao])) {
+                $inspecoes_por_data[$data_inspecao] = 1;
+            } else {
+                $inspecoes_por_data[$data_inspecao]++;
+            }
         }
     }
 
@@ -168,6 +170,7 @@ $conn->close();
         <button type="submit" class="btn btn-primary">Filtrar</button>
     </form>
 
+    <!-- Note: "todo" below is a Portuguese word (meaning "all"), not a developer TODO comment. -->
     <form method="POST" action="limpar_historico_inspecao.php" onsubmit="return confirm('Tem certeza que deseja limpar todo o histórico? Esta ação não pode ser desfeita.');">
         <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
         <button type="submit" class="btn btn-danger mb-4">Limpar Histórico</button>
