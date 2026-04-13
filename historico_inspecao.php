@@ -60,26 +60,29 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $sql .= " ORDER BY bd_extintores.inspecao_trimestral_nivel1 DESC";
 
     $stmt = $conn->prepare($sql);
-    if (!empty($params)) {
-        $bind_params = [];
-        foreach ($params as $key => $value) {
-            $bind_params[$key] = &$params[$key];
+    if ($stmt) {
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
         }
-        $stmt->bind_param($types, ...$bind_params);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stmt->close();
+    } else {
+        $result = false;
     }
-    $stmt->execute();
-    $result = $stmt->get_result();
 
     $data = [];
     $inspecoes_por_data = [];
 
-    while ($row = $result->fetch_assoc()) {
-        $data[] = $row;
-        $data_inspecao = $row['data_inspecao'];
-        if (!isset($inspecoes_por_data[$data_inspecao])) {
-            $inspecoes_por_data[$data_inspecao] = 1;
-        } else {
-            $inspecoes_por_data[$data_inspecao]++;
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $data[] = $row;
+            $data_inspecao = $row['data_inspecao'];
+            if (!isset($inspecoes_por_data[$data_inspecao])) {
+                $inspecoes_por_data[$data_inspecao] = 1;
+            } else {
+                $inspecoes_por_data[$data_inspecao]++;
+            }
         }
     }
 

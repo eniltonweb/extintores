@@ -21,44 +21,52 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
 
     // Build WHERE clauses
     $where_clauses = ["bd_extintores.manutencao_n2 IS NOT NULL"];
-    $types = "";
     $params = [];
+    $types = "";
 
     if (!empty($extintor_codigo)) {
         $where_clauses[] = "bd_extintores.codigo LIKE ?";
-        $types .= "s";
         $params[] = "%" . $extintor_codigo . "%";
+        $types .= "s";
     }
     if (!empty($predio)) {
         $where_clauses[] = "bd_extintores.Predio LIKE ?";
-        $types .= "s";
         $params[] = "%" . $predio . "%";
+        $types .= "s";
     }
     if ($cobertura === 'SIM') {
         $where_clauses[] = "bd_extintores.cobertura = 1";
     }
     if (!empty($data_inicial)) {
         $where_clauses[] = "bd_extintores.manutencao_n2 >= ?";
-        $types .= "s";
         $params[] = $data_inicial;
+        $types .= "s";
     }
     if (!empty($data_final)) {
         $where_clauses[] = "bd_extintores.manutencao_n2 <= ?";
-        $types .= "s";
         $params[] = $data_final;
+        $types .= "s";
     }
     $where_sql = implode(" AND ", $where_clauses);
 
+    // Helper function to execute prepared statements with dynamic params
+    function execute_stmt($conn, $sql, $types, $params) {
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) return false;
+
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stmt->close();
+        return $result;
+    }
+
     // 1. Contar total de registros para a paginação
     $sql_count = "SELECT COUNT(*) AS total FROM bd_extintores WHERE $where_sql";
-    $stmt_count = $conn->prepare($sql_count);
-    if (!empty($params)) {
-        $stmt_count->bind_param($types, ...$params);
-    }
-    $stmt_count->execute();
-    $result_count = $stmt_count->get_result();
-    $total_registros = $result_count->fetch_assoc()['total'];
-    $stmt_count->close();
+    $result_count = execute_stmt($conn, $sql_count, $types, $params);
+    $total_registros = $result_count ? $result_count->fetch_assoc()['total'] : 0;
 
     $itens_por_pagina = 20;
     $total_paginas = ceil($total_registros / $itens_por_pagina);
@@ -75,15 +83,12 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
         GROUP BY manutencao_n2
         ORDER BY manutencao_n2 ASC
     ";
-    $stmt_chart = $conn->prepare($sql_chart);
-    if (!empty($params)) {
-        $stmt_chart->bind_param($types, ...$params);
-    }
-    $stmt_chart->execute();
-    $result_chart = $stmt_chart->get_result();
+    $result_chart = execute_stmt($conn, $sql_chart, $types, $params);
     $manutencoes_por_data = [];
-    while ($row_chart = $result_chart->fetch_assoc()) {
-        $manutencoes_por_data[$row_chart['data_manutencao']] = (int)$row_chart['total'];
+    if ($result_chart) {
+        while ($row_chart = $result_chart->fetch_assoc()) {
+            $manutencoes_por_data[$row_chart['data_manutencao']] = (int)$row_chart['total'];
+        }
     }
     $stmt_chart->close();
 
@@ -106,18 +111,19 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
         ORDER BY bd_extintores.manutencao_n2 DESC
         LIMIT ? OFFSET ?
     ";
-    $stmt_paginated = $conn->prepare($sql_paginated);
-    $types_paginated = $types . "ii";
-    $params_paginated = $params;
-    $params_paginated[] = $itens_por_pagina;
-    $params_paginated[] = $offset;
-    $stmt_paginated->bind_param($types_paginated, ...$params_paginated);
-    $stmt_paginated->execute();
-    $result_paginated = $stmt_paginated->get_result();
 
+    // Add pagination params
+    $paginated_params = $params;
+    $paginated_params[] = $itens_por_pagina;
+    $paginated_params[] = $offset;
+    $paginated_types = $types . "ii";
+
+    $result_paginated = execute_stmt($conn, $sql_paginated, $paginated_types, $paginated_params);
     $data = [];
-    while ($row = $result_paginated->fetch_assoc()) {
-        $data[] = $row;
+    if ($result_paginated) {
+        while ($row = $result_paginated->fetch_assoc()) {
+            $data[] = $row;
+        }
     }
     $stmt_paginated->close();
 
