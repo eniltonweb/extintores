@@ -53,9 +53,23 @@ if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) 
         $conn->close();
     }
 
-    if ($redirect) {
-        header($redirect);
+            // Redirecionar com mensagem de sucesso
+            header('Location: aprovar_extintores.php?message=Extintor+aprovado+com+sucesso.');
+            exit();
+        } else {
+            // Redirecionar com mensagem de erro
+            header('Location: aprovar_extintores.php?message=Erro:+Não+foi+possível+aprovar+o+extintor.');
+            exit();
+        }
+        $stmt_aprovar->close();
+    } else {
+        // Redirecionar com mensagem de erro caso o statement não possa ser criado
+        header('Location: aprovar_extintores.php?message=Erro:+Não+foi+possível+preparar+o+statement+para+aprovação+do+extintor.');
         exit();
     }
+} else {
+    // Redirecionar caso o código do extintor não seja passado
+    header('Location: aprovar_extintores.php?message=Erro:+Código+do+extintor+não+encontrado.');
+    exit();
 }
 ?>

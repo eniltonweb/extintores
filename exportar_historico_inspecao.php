@@ -1,49 +1,50 @@
 <?php
-session_start();
-require_once __DIR__ . '/config/db_conexao.php';
-
-// Verificar se o usuário está logado e se tem permissão para acessar esta página
-if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
-    header('Location: index.php');
-    exit();
-}
-
 // Registrar a exportação no log de auditoria
 require_once __DIR__ . '/auditoria.php';
 
-header('Content-Type: text/html; charset=utf-8');
-header('Content-Disposition: attachment; filename=historico_inspecao_' . date('Y-m-d_H:i:s') . '.html');
+if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === realpath(__FILE__)) {
+    session_start();
+    require_once __DIR__ . '/config/db_conexao.php';
 
-// Construir consulta SQL
-$sql = "
-    SELECT 
-        bd_extintores.codigo AS extintor_codigo, 
-        bd_extintores.Local_Exato AS local_exato,
-        bd_extintores.Predio AS predio,
-        COALESCE(bd_extintores.usuario, 'Usuário removido') AS usuario_nome,
-		bd_extintores.tip_extintor AS tipo_extintor,		
-        bd_extintores.inspecao_trimestral_nivel1 AS data_inspecao,
-        bd_extintores.selo_do_Inmetro, 
-        bd_extintores.sinalizacao_vertical,
-        bd_extintores.sinalizacao_piso, 
-        bd_extintores.ficha_inspecao_trimestral,
-        bd_extintores.lacre, 
-        bd_extintores.pressao_manometro,
-        bd_extintores.anel_identificacao, 
-        bd_extintores.pesagem_co2_semestral
-    FROM 
-        bd_extintores
-    LEFT JOIN 
-        usuarios ON bd_extintores.usuario = usuarios.id
-    WHERE 
-        bd_extintores.inspecao_trimestral_nivel1 IS NOT NULL 
-        AND bd_extintores.inspecao_trimestral_nivel1 >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
-";
+    // Verificar se o usuário está logado e se tem permissão para acessar esta página
+    if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
+        header('Location: index.php');
+        exit();
+    }
 
-$result = $conn->query($sql);
+    header('Content-Type: text/html; charset=utf-8');
+    header('Content-Disposition: attachment; filename=historico_inspecao_' . date('Y-m-d_H:i:s') . '.html');
 
-// Iniciar a geração do conteúdo HTML
-$html = '<!DOCTYPE html>
+    // Construir consulta SQL
+    $sql = "
+        SELECT
+            bd_extintores.codigo AS extintor_codigo,
+            bd_extintores.Local_Exato AS local_exato,
+            bd_extintores.Predio AS predio,
+            COALESCE(bd_extintores.usuario, 'Usuário removido') AS usuario_nome,
+            bd_extintores.tip_extintor AS tipo_extintor,
+            bd_extintores.inspecao_trimestral_nivel1 AS data_inspecao,
+            bd_extintores.selo_do_Inmetro,
+            bd_extintores.sinalizacao_vertical,
+            bd_extintores.sinalizacao_piso,
+            bd_extintores.ficha_inspecao_trimestral,
+            bd_extintores.lacre,
+            bd_extintores.pressao_manometro,
+            bd_extintores.anel_identificacao,
+            bd_extintores.pesagem_co2_semestral
+        FROM
+            bd_extintores
+        LEFT JOIN
+            usuarios ON bd_extintores.usuario = usuarios.id
+        WHERE
+            bd_extintores.inspecao_trimestral_nivel1 IS NOT NULL
+            AND bd_extintores.inspecao_trimestral_nivel1 >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+    ";
+
+    $result = $conn->query($sql);
+
+    // Iniciar a geração do conteúdo HTML
+    $html = '<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -80,31 +81,31 @@ $html = '<!DOCTYPE html>
                 </thead>
                 <tbody>';
 
-while ($row = $result->fetch_assoc()) {
-    $row = array_map('htmlspecialchars', $row);
-	
-    // Formatando a data para d-m-Y
-    $row['data_inspecao'] = date_format(date_create($row['data_inspecao']), 'd-m-Y');
-	
-    $html .= '<tr>
-                <td>' . $row['extintor_codigo'] . '</td>
-                <td>' . $row['local_exato'] . '</td>
-                <td>' . $row['predio'] . '</td>
-                <td>' . $row['usuario_nome'] . '</td>
-				<td>' . $row['tipo_extintor'] . '</td>
-			    <td>' . $row['data_inspecao'] . '</td>
-                <td>' . $row['selo_do_Inmetro'] . '</td>
-                <td>' . $row['sinalizacao_vertical'] . '</td>
-                <td>' . $row['sinalizacao_piso'] . '</td>
-                <td>' . $row['ficha_inspecao_trimestral'] . '</td>
-                <td>' . $row['lacre'] . '</td>
-                <td>' . $row['pressao_manometro'] . '</td>
-				<td>' . $row['anel_identificacao'] . '</td>
-				<td>' . $row['pesagem_co2_semestral'] . '</td>
-            </tr>';
-}
+    while ($row = $result->fetch_assoc()) {
+        $row = array_map('htmlspecialchars', $row);
 
-$html .= '</tbody>
+        // Formatando a data para d-m-Y
+        $row['data_inspecao'] = date_format(date_create($row['data_inspecao']), 'd-m-Y');
+
+        $html .= '<tr>
+                    <td>' . $row['extintor_codigo'] . '</td>
+                    <td>' . $row['local_exato'] . '</td>
+                    <td>' . $row['predio'] . '</td>
+                    <td>' . $row['usuario_nome'] . '</td>
+                    <td>' . $row['tipo_extintor'] . '</td>
+                    <td>' . $row['data_inspecao'] . '</td>
+                    <td>' . $row['selo_do_Inmetro'] . '</td>
+                    <td>' . $row['sinalizacao_vertical'] . '</td>
+                    <td>' . $row['sinalizacao_piso'] . '</td>
+                    <td>' . $row['ficha_inspecao_trimestral'] . '</td>
+                    <td>' . $row['lacre'] . '</td>
+                    <td>' . $row['pressao_manometro'] . '</td>
+                    <td>' . $row['anel_identificacao'] . '</td>
+                    <td>' . $row['pesagem_co2_semestral'] . '</td>
+                </tr>';
+    }
+
+    $html .= '</tbody>
             </table>
         </div>
     </div>
@@ -113,13 +114,14 @@ $html .= '</tbody>
 </body>
 </html>';
 
-echo $html;
-// Registrar a auditoria
-$user_id = $_SESSION['user_id'];
-$action = 'Exportação de inspeções';
-$details = 'Exportação inspeções realizada em ' . date('Y-m-d H:i:s');
-registrar_auditoria($conn, $user_id, $action, $details);
+    echo $html;
+    // Registrar a auditoria
+    $user_id = $_SESSION['user_id'];
+    $action = 'Exportação de inspeções';
+    $details = 'Exportação inspeções realizada em ' . date('Y-m-d H:i:s');
+    registrar_auditoria($conn, $user_id, $action, $details);
 
-$conn->close();
-exit();
+    $conn->close();
+    exit();
+}
 ?>

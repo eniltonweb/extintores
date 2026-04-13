@@ -7,31 +7,30 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Consultar dados de manutenções realizadas
-$sql_manutencao = "SELECT tipo_manutencao, COUNT(*) AS total FROM historico_manutencao GROUP BY tipo_manutencao";
-$result_manutencao = $conn->query($sql_manutencao);
+// Consultar dados consolidados do dashboard para reduzir o número de requisições ao banco
+$sql_dashboard = "
+    SELECT 'manutencao' AS source, tipo_manutencao AS label, COUNT(*) AS total FROM historico_manutencao GROUP BY tipo_manutencao
+    UNION ALL
+    SELECT 'proxima' AS source, proxima_manutencao_n2 AS label, COUNT(*) AS total FROM bd_extintores WHERE proxima_manutencao_n2 IS NOT NULL GROUP BY proxima_manutencao_n2
+    UNION ALL
+    SELECT 'extintores' AS source, tip_extintor AS label, COUNT(*) AS total FROM bd_extintores GROUP BY tip_extintor
+";
+$result_dashboard = $conn->query($sql_dashboard);
 
 $manutencoes = [];
-while ($row = $result_manutencao->fetch_assoc()) {
-    $manutencoes[] = $row;
-}
-
-// Consultar dados de próximas manutenções
-$sql_proximas = "SELECT proxima_manutencao_n2, COUNT(*) AS total FROM bd_extintores WHERE proxima_manutencao_n2 IS NOT NULL GROUP BY proxima_manutencao_n2";
-$result_proximas = $conn->query($sql_proximas);
-
 $proximas_manutencoes = [];
-while ($row = $result_proximas->fetch_assoc()) {
-    $proximas_manutencoes[] = $row;
-}
-
-// Consultar dados de tipos de extintores
-$sql_extintores = "SELECT tip_extintor, COUNT(*) AS total FROM bd_extintores GROUP BY tip_extintor";
-$result_extintores = $conn->query($sql_extintores);
-
 $extintores = [];
-while ($row = $result_extintores->fetch_assoc()) {
-    $extintores[] = $row;
+
+if ($result_dashboard !== false) {
+    while ($row = $result_dashboard->fetch_assoc()) {
+        if ($row['source'] === 'manutencao') {
+            $manutencoes[] = ['tipo_manutencao' => $row['label'], 'total' => $row['total']];
+        } elseif ($row['source'] === 'proxima') {
+            $proximas_manutencoes[] = ['proxima_manutencao_n2' => $row['label'], 'total' => $row['total']];
+        } elseif ($row['source'] === 'extintores') {
+            $extintores[] = ['tip_extintor' => $row['label'], 'total' => $row['total']];
+        }
+    }
 }
 
 $conn->close();
