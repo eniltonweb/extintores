@@ -38,23 +38,28 @@ if ($result->num_rows > 0) {
         $mail->setFrom($mailFrom, 'Sistema de Manutenção');
         $mail->isHTML(true);
 
+        $mensagens = [];
+        $codigos = [];
+
         $alertas = [];
         while ($row = $result->fetch_assoc()) {
-            $alertas[] = '<li>O extintor com código <strong>' . htmlspecialchars($row['codigo']) . '</strong> está com manutenção pendente. Próxima manutenção: ' . htmlspecialchars($row['proxima_manutencao_n2']) . '</li>';
+            $mensagens[] = "O extintor com código {$row['codigo']} está com manutenção pendente. Próxima manutenção: {$row['proxima_manutencao_n2']}";
+            $codigos[] = $row['codigo'];
         }
 
-        if (!empty($alertas)) {
+        if (!empty($mensagens)) {
             try {
                 $mail->addAddress($mailRecipient);
-                $mail->Subject = 'Resumo de Alertas de Manutenção Pendente';
-                $mail->Body = '<h3>Alertas de Manutenção Pendente</h3><ul>' . implode('', $alertas) . '</ul>';
+                $mail->Subject = 'Alerta de Manutenção Pendente';
+                $mail->Body = implode('<br><br>', $mensagens);
 
                 $mail->send();
-                echo 'Resumo de alertas enviado com sucesso.<br>';
+
+                foreach ($codigos as $codigo) {
+                    echo 'Mensagem enviada para ' . $codigo . '<br>';
+                }
             } catch (Exception $e) {
-                echo "O resumo de alertas não pôde ser enviado. Erro: {$mail->ErrorInfo}";
-            } finally {
-                $mail->clearAddresses();
+                echo "A mensagem não pôde ser enviada. Erro: {$mail->ErrorInfo}";
             }
         }
     } catch (Exception $e) {
