@@ -30,9 +30,13 @@ if (!function_exists('registrar_auditoria')) {
     function registrar_auditoria($conn, $user_id, $action, $details) {
         $sql = "INSERT INTO auditoria_logs (user_id, action, detalhes) VALUES (?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('iss', $user_id, $action, $details);
-        $stmt->execute();
-        $stmt->close();
+        if ($stmt !== false) {
+            $stmt->bind_param('iss', $user_id, $action, $details);
+            $stmt->execute();
+            $stmt->close();
+        } else {
+            error_log("Erro ao preparar statement para registrar_auditoria: " . $conn->error);
+        }
     }
 }
 ?>

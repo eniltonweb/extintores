@@ -37,6 +37,7 @@ class MockConnExportarInspecaoNok {
     public $last_stmt = null;
     public $prepare_returns_false = false;
     public $execute_returns_false = false;
+    public $error = '';
 
     public function prepare($sql) {
         if ($this->prepare_returns_false) {
@@ -147,21 +148,16 @@ class ExportarInspecaoNokTest extends MiniTestCase {
         $conn = new MockConnExportarInspecaoNok();
         $conn->prepare_returns_false = true;
 
+        // With the fix, registrar_auditoria should handle the false statement gracefully
+        // and not throw an error.
         $exceptionThrown = false;
         try {
             registrar_auditoria($conn, 99, 'Test Action', 'Test Details');
         } catch (\Error $e) {
             $exceptionThrown = true;
-            // The exact error message could be "Call to a member function bind_param() on false"
-            // or "...on bool" depending on the PHP version, so we check for both.
-            $this->assertTrue(
-                strpos($e->getMessage(), 'bind_param() on false') !== false ||
-                strpos($e->getMessage(), 'bind_param() on bool') !== false,
-                "Expected error message about calling bind_param on false/bool"
-            );
         }
 
-        $this->assertTrue($exceptionThrown, "An Error should be thrown when prepare returns false");
+        $this->assertEquals(false, $exceptionThrown, "No Error should be thrown when prepare returns false as it is now handled gracefully");
     }
 
     public function testRegistrarAuditoriaWhenExecuteReturnsFalse() {
@@ -171,7 +167,7 @@ class ExportarInspecaoNokTest extends MiniTestCase {
         // Function does not currently check execute() return value, so it should just proceed without throwing.
         $exceptionThrown = false;
         try {
-            registrar_auditoria($conn, 99, 'Test Action', 'Test Details');
+            registrar_auditoria($conn, 99, 'Test Action', 'Test Details'); $exceptionThrown = false;
         } catch (\Exception $e) {
             $exceptionThrown = true;
         } catch (\Error $e) {
