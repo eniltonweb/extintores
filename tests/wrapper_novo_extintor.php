@@ -116,7 +116,8 @@ set_error_handler(function($errno, $errstr) use (&$captured_headers) {
         $captured_headers[] = "header_modified";
         return true;
     }
-}
+    return false;
+});
 
 // Output the detected redirect at the end so the test runner can assert on it.
 register_shutdown_function(function() use (&$captured_headers) {

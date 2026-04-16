@@ -23,21 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); // Gerar novo para próxima tentativa
         $csrf_token = $_SESSION['csrf_token'];
 
-        $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
-    $password = $_POST['password'];
-
-    if (empty($username) || empty($password)) {
-        $error = "Preencha todos os campos.";
-    } else {
-        unset($_SESSION['csrf_token']); // Invalidar o token após o uso
-
-        $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
-        $password = $_POST['password'];
+        $username = (string)filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
+        $password = (string)filter_input(INPUT_POST, 'password', FILTER_DEFAULT);
 
         if (empty($username) || empty($password)) {
             $error = "Preencha todos os campos.";
         } else {
-
             $sql = "SELECT * FROM usuarios WHERE username = ?";
             $stmt = $conn->prepare($sql);
 
@@ -68,9 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $stmt->close();
             }
         }
-        }
     }
-    } // Fechamento do else do CSRF
 }
 
 $conn->close();

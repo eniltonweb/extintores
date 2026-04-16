@@ -33,6 +33,10 @@ class MockStatement {
         return $this->executeResult;
     }
 
+    public function get_result() {
+        return new MockResult($this->mock_rows);
+    }
+
     public function bind_result(&...$vars) {
         $this->bound_result_vars = [];
         foreach ($vars as &$var) {
