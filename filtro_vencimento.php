@@ -28,18 +28,20 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $sort_column = filter_input(INPUT_GET, 'sort', FILTER_SANITIZE_SPECIAL_CHARS) ?: 'codigo';
     $sort_order = filter_input(INPUT_GET, 'order', FILTER_SANITIZE_SPECIAL_CHARS) ?: 'ASC';
 
-    // Validar colunas permitidas para ordenação
-    $valid_columns = ['codigo', 'Predio', 'dias_para_expirar_n2'];
-    if (!in_array($sort_column, $valid_columns)) {
-        $sort_column = 'codigo';
-    }
+    // Validar colunas permitidas para ordenação usando match para garantir literais
+    $safe_column = match ($sort_column) {
+        'Predio' => 'Predio',
+        'dias_para_expirar_n2' => 'dias_para_expirar_n2',
+        default => 'codigo',
+    };
 
-    // Validar ordem permitida (ASC ou DESC)
-    if ($sort_order != 'ASC' && $sort_order != 'DESC') {
-        $sort_order = 'ASC';
-    }
+    // Validar ordem permitida (ASC ou DESC) usando match
+    $safe_order = match ($sort_order) {
+        'DESC' => 'DESC',
+        default => 'ASC',
+    };
 
-    $sql = "SELECT * FROM bd_extintores WHERE dias_para_expirar_n2 <= ? ORDER BY $sort_column $sort_order";
+    $sql = "SELECT * FROM bd_extintores WHERE dias_para_expirar_n2 <= ? ORDER BY $safe_column $safe_order";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('i', $dias);
     $stmt->execute();
