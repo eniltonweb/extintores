@@ -57,20 +57,28 @@ if (!isset($_SESSION['nome_usuario'])){
             // Generate a temporary file to avoid partial reads/writes
             $tempFile = dirname($cacheFile) . '/.tmp_co2_extintores_' . uniqid() . '.html';
             $fp = @fopen($tempFile, 'w');
+            $options = [];
 
             if ($resultado) {
               while($linha = $resultado->fetch_assoc()){
-                $linha = array_map('htmlspecialchars', $linha);
-                $options[] = "<option value='{$linha['id']}'>{$linha['codigo']}</option>";
+                $id_safe = htmlspecialchars((string)($linha['id'] ?? ''), ENT_QUOTES, 'UTF-8');
+                $codigo_safe = htmlspecialchars((string)($linha['codigo'] ?? ''), ENT_QUOTES, 'UTF-8');
+                $options[] = "<option value='{$id_safe}'>{$codigo_safe}</option>";
               }
+
               if ($fp) {
+                foreach ($options as $opt) {
+                  fwrite($fp, $opt . "\n");
+                }
                 fclose($fp);
                 // Atomic write for cache file
-                rename($tempFile, $cacheFile);
+                rename($tempFile, dirname($cacheFile) . '/' . basename($cacheFile));
               }
+
+              echo implode("\n", $options);
             } elseif ($fp) {
                 fclose($fp);
-                unlink($tempFile);
+                unlink(dirname($cacheFile) . '/' . basename($tempFile));
             }
           }
         ?>
