@@ -31,10 +31,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $logs_to_delete = array_diff($_POST['logs'], [$id_exclusao]);
 
             if (!empty($logs_to_delete)) {
-                $logs_to_delete = implode(",", array_map('intval', $logs_to_delete));
-                $sql = "DELETE FROM auditoria_logs WHERE id IN ($logs_to_delete)";
-                $conn->query($sql);
-                $message = "Logs selecionados foram apagados.";
+                $logs_to_delete = array_map('intval', array_values($logs_to_delete));
+                $placeholders = implode(",", array_fill(0, count($logs_to_delete), "?"));
+                $sql = "DELETE FROM auditoria_logs WHERE id IN ($placeholders)";
+                $stmt = $conn->prepare($sql);
+
+                if ($stmt) {
+                    $types = str_repeat('i', count($logs_to_delete));
+                    $bind_params = [];
+                    foreach ($logs_to_delete as $key => $value) {
+                        $bind_params[$key] = &$logs_to_delete[$key];
+                    }
+                    $stmt->bind_param($types, ...$bind_params);
+                    $stmt->execute();
+                    $stmt->close();
+                    $message = "Logs selecionados foram apagados.";
+                } else {
+                    $message = "Erro ao preparar a exclusão.";
+                }
             } else {
                 $message = "Nenhum log foi selecionado para exclusão.";
             }
@@ -50,7 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $message = "Erro ao apagar todos os logs: " . $conn->error;
         }
-    }
     }
 }
 
