@@ -81,6 +81,66 @@ class SalvarManutencaoTest extends MiniTestCase {
         $this->assertEquals('Location: formulario_manutencao.php?message=Erro%3A+Falha+na+valida%C3%A7%C3%A3o+de+seguran%C3%A7a.', $result);
     }
 
+    public function testHandlesPrepareFailure() {
+        $conn = new class extends MockConnection {
+            public $error = "Mock prepare error";
+            public function prepare($query) {
+                return false;
+            }
+        };
+        $session = [
+            'user_id' => 1,
+            'user_level' => 'fornecedor',
+            'user_name' => 'testuser',
+            'csrf_token' => 'valid_token'
+        ];
+        $post = [
+            'csrf_token' => 'valid_token',
+            'codigo' => 'EXT001',
+            'manutencao_n2' => '1',
+            'cobertura' => '0'
+        ];
+        $server = ['REQUEST_METHOD' => 'POST'];
+
+        // Suppress error log output during testing
+        ob_start();
+        $result = salvar_manutencao_logic($conn, $session, $post, $server);
+        ob_end_clean();
+
+        $this->assertEquals('Location: formulario_manutencao.php?message=Erro+interno+ao+atualizar+a+manuten%C3%A7%C3%A3o.+Erro+interno+ao+atualizar+os+dias+para+expirar.', $result);
+    }
+
+    public function testHandlesExecuteFailure() {
+        $conn = new class extends MockConnection {
+            public function prepare($query) {
+                $stmt = parent::prepare($query);
+                $stmt->executeResult = false;
+                $stmt->error = "Mock execute error";
+                return $stmt;
+            }
+        };
+        $session = [
+            'user_id' => 1,
+            'user_level' => 'fornecedor',
+            'user_name' => 'testuser',
+            'csrf_token' => 'valid_token'
+        ];
+        $post = [
+            'csrf_token' => 'valid_token',
+            'codigo' => 'EXT001',
+            'manutencao_n2' => '1',
+            'cobertura' => '0'
+        ];
+        $server = ['REQUEST_METHOD' => 'POST'];
+
+        // Suppress error log output during testing
+        ob_start();
+        $result = salvar_manutencao_logic($conn, $session, $post, $server);
+        ob_end_clean();
+
+        $this->assertEquals('Location: formulario_manutencao.php?message=Erro+interno+ao+atualizar+a+manuten%C3%A7%C3%A3o.+Erro+interno+ao+atualizar+os+dias+para+expirar.', $result);
+    }
+
     public function testProcessesWithValidCsrfToken() {
         $conn = new MockConnection();
         $session = [

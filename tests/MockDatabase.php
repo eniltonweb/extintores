@@ -8,6 +8,7 @@ class MockStatement {
     public $bound_result_vars = [];
     public $executed = false;
     public $closed = false;
+    public $error = '';
     public $mock_result_data = null;
     public $mock_rows = [];
     public $current_row = 0;
