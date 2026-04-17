@@ -24,10 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $csrf_token = $_SESSION['csrf_token'];
 
         $username = (string)filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
+        // Process password as a raw string and apply basic length limit to prevent DoS
         $password = (string)filter_input(INPUT_POST, 'password', FILTER_DEFAULT);
 
         if (empty($username) || empty($password)) {
             $error = "Preencha todos os campos.";
+        } elseif (strlen($username) > 255 || strlen($password) > 255) {
+            $error = "Tamanho de entrada excedido.";
         } else {
             $sql = "SELECT * FROM usuarios WHERE username = ?";
             $stmt = $conn->prepare($sql);
