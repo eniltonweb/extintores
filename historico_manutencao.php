@@ -49,20 +49,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     }
     $where_sql = implode(" AND ", $where_clauses);
 
-    // Helper function to execute prepared statements with dynamic params
-    function execute_stmt($conn, $sql, $types, $params) {
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) return false;
-
-        if (!empty($params)) {
-            $stmt->bind_param($types, ...$params);
-        }
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-        return $result;
-    }
-
     // 1. Contar total de registros para a paginação
     $sql_count = "SELECT COUNT(*) AS total FROM bd_extintores WHERE $where_sql";
     $result_count = execute_stmt($conn, $sql_count, $types, $params);
