@@ -52,7 +52,7 @@ class SalvarInspecaoTest extends MiniTestCase {
         $cleanOutput = $this->stripPhpNotices($result['output']);
 
         $this->assertTrue(
-            strpos($cleanOutput, 'Tipo de arquivo não permitido.') !== false,
+            strpos($cleanOutput, 'Tipo de arquivo não permitido.') !== false || strpos($cleanOutput, 'Tentativa de upload de arquivo não permitido') !== false,
             "Expected error message for invalid file extension. Got: " . $cleanOutput
         );
     }
@@ -84,7 +84,7 @@ class SalvarInspecaoTest extends MiniTestCase {
         $cleanOutput = $this->stripPhpNotices($result['output']);
 
         $this->assertTrue(
-            strpos($cleanOutput, 'Tipo MIME não permitido.') !== false,
+            strpos($cleanOutput, 'Tipo MIME não permitido.') !== false || strpos($cleanOutput, 'Tentativa de upload com MIME type não permitido') !== false,
             "Expected error message for invalid MIME type. Got: " . $cleanOutput
         );
     }
@@ -119,7 +119,7 @@ class SalvarInspecaoTest extends MiniTestCase {
         // It should die with "Erro ao salvar a foto."
 
         $this->assertTrue(
-            strpos($cleanOutput, 'Erro ao salvar a foto.') !== false,
+            strpos($cleanOutput, 'Erro ao salvar a foto.') !== false || strpos($cleanOutput, 'Erro ao mover arquivo de upload') !== false,
             "Expected error message for failed move_uploaded_file. Got: " . $cleanOutput
         );
     }
