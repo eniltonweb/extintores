@@ -8,39 +8,50 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_level'], ['admin',
     exit();
 }
 
+// Garantir inicialização do token CSRF
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Inserir um novo extintor
-    if (isset($_POST['inserir'])) {
-        $codigo = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $predio = filter_input(INPUT_POST, 'predio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $atividade = filter_input(INPUT_POST, 'atividade', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $local_exato = filter_input(INPUT_POST, 'local_exato', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $tipo_extintor = filter_input(INPUT_POST, 'tipo_extintor', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $carga = filter_input(INPUT_POST, 'carga', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    // Verificar token CSRF
+    if (!isset($_POST['csrf_token']) || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        error_log("Erro CSRF detectado em extintores.php.");
+        $mensagem = "Erro de validação de segurança. Por favor, tente novamente.";
+    } else {
+        // Inserir um novo extintor
+        if (isset($_POST['inserir'])) {
+            $codigo = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $predio = filter_input(INPUT_POST, 'predio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $atividade = filter_input(INPUT_POST, 'atividade', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $local_exato = filter_input(INPUT_POST, 'local_exato', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $tipo_extintor = filter_input(INPUT_POST, 'tipo_extintor', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $carga = filter_input(INPUT_POST, 'carga', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $sql_inserir = "INSERT INTO bd_extintores (codigo, Predio, Atividade, Local_Exato, tip_extintor, carga) VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt_inserir = $conn->prepare($sql_inserir);
-        $stmt_inserir->bind_param('ssssss', $codigo, $predio, $atividade, $local_exato, $tipo_extintor, $carga);
+            $sql_inserir = "INSERT INTO bd_extintores (codigo, Predio, Atividade, Local_Exato, tip_extintor, carga) VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt_inserir = $conn->prepare($sql_inserir);
+            $stmt_inserir->bind_param('ssssss', $codigo, $predio, $atividade, $local_exato, $tipo_extintor, $carga);
 
-        if ($stmt_inserir->execute()) {
-            $mensagem = "Extintor inserido com sucesso!";
-        } else {
-            $mensagem = "Erro ao inserir extintor: " . $stmt_inserir->error;
+            if ($stmt_inserir->execute()) {
+                $mensagem = "Extintor inserido com sucesso!";
+            } else {
+                $mensagem = "Erro ao inserir extintor: " . $stmt_inserir->error;
+            }
         }
-    }
 
-    // Remover um extintor
-    if (isset($_POST['remover'])) {
-        $codigo = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        // Remover um extintor
+        if (isset($_POST['remover'])) {
+            $codigo = filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $sql_remover = "DELETE FROM bd_extintores WHERE codigo = ?";
-        $stmt_remover = $conn->prepare($sql_remover);
-        $stmt_remover->bind_param('s', $codigo);
+            $sql_remover = "DELETE FROM bd_extintores WHERE codigo = ?";
+            $stmt_remover = $conn->prepare($sql_remover);
+            $stmt_remover->bind_param('s', $codigo);
 
-        if ($stmt_remover->execute()) {
-            $mensagem = "Extintor removido com sucesso!";
-        } else {
-            $mensagem = "Erro ao remover extintor: " . $stmt_remover->error;
+            if ($stmt_remover->execute()) {
+                $mensagem = "Extintor removido com sucesso!";
+            } else {
+                $mensagem = "Erro ao remover extintor: " . $stmt_remover->error;
+            }
         }
     }
 }
@@ -109,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php endif; ?>
         <h2>Inserir Extintor</h2>
         <form method="POST" action="extintores.php">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
             <label for="codigo">Código:</label>
             <input type="text" id="codigo" name="codigo" required>
             <label for="predio">Prédio:</label>
@@ -126,6 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <h2>Remover Extintor</h2>
         <form method="POST" action="extintores.php">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
             <label for="codigo">Código:</label>
             <input type="text" id="codigo" name="codigo" required>
             <button type="submit" name="remover">Remover Extintor</button>
