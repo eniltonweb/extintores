@@ -12,7 +12,8 @@ if (!isset($_GET['codigo'])) {
     $codigo = htmlspecialchars($_GET['codigo']);
     if (!preg_match('/^[a-zA-Z0-9\-]+$/', $codigo)) {
         $error_message = 'Código inválido.';
-        error_log('codigobarras.php erro: ' . $error_message . ' | Input: ' . $_GET['codigo']);
+        $sanitized_input = str_replace(array("\r", "\n"), '', $_GET['codigo']);
+        error_log('codigobarras.php erro: ' . $error_message . ' | Input: ' . $sanitized_input);
     }
 }
 

@@ -24,6 +24,28 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $params = [];
     $types = "";
 
+    $sql_count = "SELECT COUNT(*) AS total FROM bd_extintores WHERE bd_extintores.manutencao_n2 IS NOT NULL";
+
+    $sql_chart = "
+        SELECT manutencao_n2 AS data_manutencao, COUNT(*) AS total
+        FROM bd_extintores
+        WHERE bd_extintores.manutencao_n2 IS NOT NULL";
+
+    $sql_paginated = "
+        SELECT
+            bd_extintores.codigo AS extintor_codigo,
+            bd_extintores.Local_Exato AS local_exato,
+            bd_extintores.Predio AS predio,
+            bd_extintores.cobertura,
+            CASE
+                WHEN bd_extintores.usuario_n2 IS NULL OR bd_extintores.usuario_n2 = '' THEN 'Usuário removido'
+                ELSE bd_extintores.usuario_n2
+            END AS usuario_nome,
+            bd_extintores.manutencao_n2 AS data_manutencao
+        FROM
+            bd_extintores
+        WHERE bd_extintores.manutencao_n2 IS NOT NULL";
+
     if (!empty($extintor_codigo)) {
         $where_sql .= " AND bd_extintores.codigo LIKE ?";
         $params[] = "%" . $extintor_codigo . "%";
@@ -93,7 +115,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
             $manutencoes_por_data[$row_chart['data_manutencao']] = (int)$row_chart['total'];
         }
     }
-    $stmt_chart->close();
 
     // 3. Buscar dados paginados para a tabela
     $sql_paginated = "
@@ -128,7 +149,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
             $data[] = $row;
         }
     }
-    $stmt_paginated->close();
+    if (isset($stmt_paginated)) $stmt_paginated->close();
 
     header('Content-Type: application/json');
     echo json_encode([
