@@ -4,7 +4,7 @@
  * We pass arguments to simulate different states.
  */
 
-class MockDBStreamResetar {
+class MockDBStreamResetarSenha {
     private $position;
     private $content;
 
@@ -13,9 +13,9 @@ class MockDBStreamResetar {
 
         if (strpos($realPath, 'config/db_conexao.php') !== false) {
             $this->content = "<?php
-                class MockResetarStatement {
+                class MockResetarSenhaStatement {
                     public \$success = true;
-                    public \$error = 'Mock DB Error';
+                    public \$error = 'mock_stmt_error';
 
                     public function __construct(\$state) {
                         if (isset(\$state['db_stmt_error'])) {
@@ -32,53 +32,56 @@ class MockDBStreamResetar {
                     public function close() {}
                 }
 
-                class MockResetarMySQLi {
+                class MockResetarSenhaMySQLi {
                     public \$state;
-                    public \$error = 'Mock Connection Error';
+                    public \$error = 'mock_db_error';
 
                     public function __construct(\$state) {
                         \$this->state = \$state;
                     }
 
-                    public function prepare(\$sql) {
+                    public function prepare(\$query) {
                         if (isset(\$this->state['db_prepare_error'])) {
                             return false;
                         }
-                        return new MockResetarStatement(\$this->state);
+                        return new MockResetarSenhaStatement(\$this->state);
                     }
 
                     public function close() {}
                 }
 
-                global \$conn;
-                \$conn = new MockResetarMySQLi(json_decode(urldecode('" . urlencode(json_encode($GLOBALS['test_state'])) . "'), true));
+                global \$test_state;
+                \$conn = new MockResetarSenhaMySQLi(\$test_state);
             ?>";
-            return true;
-        }
-
-        if (strpos($realPath, 'auditoria.php') !== false) {
+        } elseif (strpos($realPath, 'auditoria.php') !== false) {
             $this->content = "<?php
-                function registrar_auditoria(\$conn, \$usuario_id, \$acao, \$detalhes, \$codigo_extintor = null) {
-                    echo '[MOCK_AUDITORIA] ' . \$acao . ' - ' . \$detalhes . \"\n\";
+                function auditoria(\$acao, \$codigo_extintor, \$user_id, \$user_level, \$detalhes = '') {
+                    echo \"\\n[MOCK_AUDITORIA] \$acao | \$codigo_extintor | \$user_id | \$user_level | \$detalhes\\n\";
                 }
             ?>";
-            return true;
+        } else {
+            // Restore wrapper and intercept headers in the target file
+            stream_wrapper_restore("file");
+            if (file_exists($realPath)) {
+                $content = file_get_contents($realPath);
+
+                // Simple regex to convert header(...) to echo "[MOCK_HEADER] ..."
+                $content = preg_replace('/header\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', 'echo "\n[MOCK_HEADER] $1\n"', $content);
+                // Replace filter_input so we can test it from CLI
+                $content = str_replace("filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT)", "(\$_POST['id'] ?? null)", $content);
+                $content = str_replace("filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT)", "(\$_GET['id'] ?? null)", $content);
+                $this->content = $content;
+            } else {
+                stream_wrapper_unregister("file");
+                stream_wrapper_register("file", "MockDBStreamResetarSenha");
+                return false;
+            }
+            stream_wrapper_unregister("file");
+            stream_wrapper_register("file", "MockDBStreamResetarSenha");
         }
 
-        if (file_exists($realPath)) {
-            $content = file_get_contents($realPath);
-
-            // Bypass session_start to avoid "headers already sent"
-            $content = preg_replace('/session_start\s*\(\)\s*;/', '', $content);
-
-            // Bypass header calls
-            $content = preg_replace('/header\s*\((.*?)\)\s*;/', 'echo "[MOCK_HEADER] " . $1 . "\n";', $content);
-
-            $this->content = $content;
-            return true;
-        }
-
-        return false;
+        $this->position = 0;
+        return true;
     }
 
     public function stream_read($count) {
@@ -94,33 +97,56 @@ class MockDBStreamResetar {
     public function stream_stat() {
         return [];
     }
+
+    public function stream_set_option($option, $arg1, $arg2) {
+        return false;
+    }
+
+    public function url_stat($path, $flags) {
+        return [
+            'dev' => 0, 'ino' => 0, 'mode' => 0100644, 'nlink' => 1,
+            'uid' => 0, 'gid' => 0, 'rdev' => 0, 'size' => 1000,
+            'atime' => 0, 'mtime' => 0, 'ctime' => 0, 'blksize' => -1, 'blocks' => -1
+        ];
+    }
 }
 
-stream_wrapper_register('mockdb', 'MockDBStreamResetar');
+// Intercept file inclusions
+stream_wrapper_unregister("file");
+stream_wrapper_register("file", "MockDBStreamResetarSenha");
 
-// Obter estado inicial do JSON
-$state_json = $argv[1] ?? '{}';
-$state = json_decode($state_json, true);
-$GLOBALS['test_state'] = $state;
+session_start();
 
-// Configurar estado de Mock
-$_SESSION = $state['session'] ?? [];
-$_POST = $state['post'] ?? [];
-$_GET = $state['get'] ?? [];
-$_SERVER['REQUEST_METHOD'] = $state['method'] ?? 'GET';
+global $test_state;
+$test_state = [];
 
-// Se não tiver password_hash, usamos uma genérica ou vamos reescrever
-// Mas o PHP tem password_hash.
+if (isset($argv[1])) {
+    $state = json_decode($argv[1], true);
+    $test_state = $state;
 
-// Incluir o arquivo de destino através do wrapper
-ob_start();
+    if (isset($state['session'])) {
+        $_SESSION = $state['session'];
+    }
+
+    if (isset($state['post'])) {
+        $_POST = $state['post'];
+    }
+
+    if (isset($state['get'])) {
+        $_GET = $state['get'];
+    }
+
+    if (isset($state['server'])) {
+        $_SERVER = array_merge($_SERVER, $state['server']);
+    }
+}
+
+// Execute the target script
 try {
-    include 'mockdb://' . __DIR__ . '/../resetar_senha.php';
-} catch (Exception $e) {
-    echo "Exception: " . $e->getMessage();
-} catch (Error $e) {
-    echo "Error: " . $e->getMessage();
+    include __DIR__ . '/../resetar_senha.php';
+} catch (Throwable $e) {
+    echo "EXCEPTION: " . $e->getMessage();
 }
-$output = ob_get_clean();
 
-echo $output;
+stream_wrapper_restore("file");
+?>
