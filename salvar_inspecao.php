@@ -70,15 +70,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $mime_type = finfo_file($finfo, $foto['tmp_name']);
         finfo_close($finfo);
 
-        $allowed_mime_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (!in_array($mime_type, $allowed_mime_types)) {
+        $allowed_mime_types = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp'
+        ];
+
+        if (!array_key_exists($mime_type, $allowed_mime_types)) {
             error_log("Tentativa de upload com MIME type não permitido em salvar_inspecao.php. MIME: $mime_type");
             header('Location: formulario_inspecao.php?codigo=' . urlencode($codigo) . '&message=' . urlencode('Erro: Tipo MIME não permitido.'));
             exit();
         }
 
-        // Gerar um nome de arquivo seguro e aleatório
-        $foto_nome = uniqid('foto_', true) . '.' . $file_extension;
+        // Gerar um nome de arquivo seguro e aleatório baseado no MIME type detectado
+        $safe_extension = $allowed_mime_types[$mime_type];
+        $foto_nome = uniqid('foto_', true) . '.' . $safe_extension;
         $foto_destino = "../uploads/" . $foto_nome;
 
         if (!move_uploaded_file($foto['tmp_name'], $foto_destino)) {
@@ -120,14 +127,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     } else {
         error_log("Erro no DB ao salvar inspeção: " . $stmt->error);
-        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . urlencode('Erro interno ao salvar a inspeção.'));
-        exit();
-    }
 
         $stmt->close();
         $conn->close();
 
-        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . $error_msg);
+        header('Location: formulario_inspecao.php?codigo=' . $codigo . '&message=' . urlencode('Erro interno ao salvar a inspeção.'));
         exit();
     }
 }

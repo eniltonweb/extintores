@@ -19,38 +19,37 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $data_inicial = isset($_GET['data_inicial']) ? $_GET['data_inicial'] : '';
     $data_final = isset($_GET['data_final']) ? $_GET['data_final'] : '';
 
-    // Build WHERE clauses
-    $where_clauses = ["bd_extintores.manutencao_n2 IS NOT NULL"];
+    // Base SQL suffix
+    $where_suffix = " WHERE bd_extintores.manutencao_n2 IS NOT NULL";
     $params = [];
     $types = "";
 
     if (!empty($extintor_codigo)) {
-        $where_clauses[] = "bd_extintores.codigo LIKE ?";
+        $where_suffix .= " AND bd_extintores.codigo LIKE ?";
         $params[] = "%" . $extintor_codigo . "%";
         $types .= "s";
     }
     if (!empty($predio)) {
-        $where_clauses[] = "bd_extintores.Predio LIKE ?";
+        $where_suffix .= " AND bd_extintores.Predio LIKE ?";
         $params[] = "%" . $predio . "%";
         $types .= "s";
     }
     if ($cobertura === 'SIM') {
-        $where_clauses[] = "bd_extintores.cobertura = 1";
+        $where_suffix .= " AND bd_extintores.cobertura = 1";
     }
     if (!empty($data_inicial)) {
-        $where_clauses[] = "bd_extintores.manutencao_n2 >= ?";
+        $where_suffix .= " AND bd_extintores.manutencao_n2 >= ?";
         $params[] = $data_inicial;
         $types .= "s";
     }
     if (!empty($data_final)) {
-        $where_clauses[] = "bd_extintores.manutencao_n2 <= ?";
+        $where_suffix .= " AND bd_extintores.manutencao_n2 <= ?";
         $params[] = $data_final;
         $types .= "s";
     }
-    $where_sql = implode(" AND ", $where_clauses);
 
     // 1. Contar total de registros para a paginação
-    $sql_count = "SELECT COUNT(*) AS total FROM bd_extintores WHERE $where_sql";
+    $sql_count = "SELECT COUNT(*) AS total FROM bd_extintores" . $where_suffix;
     $result_count = execute_stmt($conn, $sql_count, $types, $params);
     $total_registros = $result_count ? $result_count->fetch_assoc()['total'] : 0;
 
@@ -64,8 +63,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     // 2. Buscar dados para o gráfico usando GROUP BY (evita carregar todos os dados em PHP)
     $sql_chart = "
         SELECT manutencao_n2 AS data_manutencao, COUNT(*) AS total
-        FROM bd_extintores
-        WHERE $where_sql
+        FROM bd_extintores" . $where_suffix . "
         GROUP BY manutencao_n2
         ORDER BY manutencao_n2 ASC
     ";
@@ -91,9 +89,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
             END AS usuario_nome, 
             bd_extintores.manutencao_n2 AS data_manutencao
         FROM 
-            bd_extintores
-        WHERE 
-            $where_sql
+            bd_extintores" . $where_suffix . "
         ORDER BY bd_extintores.manutencao_n2 DESC
         LIMIT ? OFFSET ?
     ";
