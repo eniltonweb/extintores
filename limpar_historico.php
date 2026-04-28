@@ -1,35 +1,50 @@
 <?php
-session_start();
+if (!function_exists('limpar_historico_logic')) {
+    function limpar_historico_logic($conn, $session, $post, $server) {
+        if (!isset($session['user_id']) || $session['user_level'] != 'admin') {
+            return 'Location: index.php';
+        }
 
-// Validations before including db connection so that we don't have to connect to DB to reject invalid requests
-if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
-    header('Location: index.php');
-    exit();
+        if ($server['REQUEST_METHOD'] !== 'POST') {
+            return 'Location: historico_manutencao.php';
+        }
+
+        if (!isset($post['csrf_token']) || !isset($session['csrf_token']) || !hash_equals($session['csrf_token'], $post['csrf_token'])) {
+            return 'Location: historico_manutencao.php?message=' . urlencode('Erro: Token CSRF inválido.');
+        }
+
+        // Limpar os campos de manutenção na tabela bd_extintores
+        $sql = "
+            UPDATE bd_extintores
+            SET manutencao_n2 = NULL, proxima_manutencao_n2 = NULL, dias_para_expirar_n2 = NULL, cobertura = NULL
+            WHERE manutencao_n2 IS NOT NULL
+        ";
+        if ($conn->query($sql) === TRUE) {
+            if (function_exists('auditoria')) {
+                auditoria('Limpeza de histórico', null, $session['user_id'], $session['user_level'], 'O histórico de manutenções foi limpo.');
+            }
+            return 'Location: historico_manutencao.php?message=' . urlencode('Histórico de manutenções limpo com sucesso');
+        } else {
+            error_log("Erro ao limpar histórico: " . ($conn->error ?? 'Unknown error'));
+            return 'Location: historico_manutencao.php?message=' . urlencode('Erro ao limpar o histórico de manutenção.');
+        }
+    }
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: historico_manutencao.php');
-    exit();
-}
+if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === realpath(__FILE__)) {
+    session_start();
+    require_once __DIR__ . '/config/db_conexao.php';
+    require_once __DIR__ . '/auditoria.php';
 
-if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-    header('Location: historico_manutencao.php?message=Erro:+Token+CSRF+inválido.');
-    exit();
-}
+    $redirect = limpar_historico_logic($conn, $_SESSION, $_POST, $_SERVER);
 
-// Limpar os campos de manutenção na tabela bd_extintores
-$sql = "
-    UPDATE bd_extintores
-    SET manutencao_n2 = NULL, proxima_manutencao_n2 = NULL, dias_para_expirar_n2 = NULL, cobertura = NULL
-    WHERE manutencao_n2 IS NOT NULL
-";
-if ($conn->query($sql) === TRUE) {
-    auditoria('Limpeza de histórico', null, $_SESSION['user_id'], $_SESSION['user_level'], 'O histórico de manutenções foi limpo.');
-    header('Location: historico_manutencao.php?message=Histórico de manutenções limpo com sucesso');
-    exit();
-} else {
-    echo "Erro ao limpar histórico: " . $conn->error;
-}
+    if ($conn) {
+        $conn->close();
+    }
 
-$conn->close();
+    if ($redirect) {
+        header($redirect);
+        exit();
+    }
+}
 ?>
