@@ -84,4 +84,25 @@ class AuditoriaTest extends MiniTestCase {
         $this->assertTrue($insert_stmt->executed);
         $this->assertTrue($insert_stmt->closed);
     }
+
+    public function testAuditoriaCacheHit() {
+        global $conn;
+
+        $conn = new MockConnection();
+        $conn->mock_results["SELECT id FROM bd_extintores WHERE codigo = ?"] = 99;
+
+        $codigo_extintor = "EXT-CACHE";
+
+        // Primeira chamada - deve consultar o banco (SELECT + INSERT = 2 statements)
+        auditoria("Acao 1", $codigo_extintor, 1, "admin", "Detalhes 1");
+        $this->assertEquals(2, count($conn->statements), "Deveriam ter sido criados 2 statements na primeira chamada");
+
+        // Segunda chamada - deve usar o cache (Apenas INSERT = 3 statements no total)
+        auditoria("Acao 2", $codigo_extintor, 1, "admin", "Detalhes 2");
+        $this->assertEquals(3, count($conn->statements), "Deveriam ter sido criados 3 statements no total apos a segunda chamada (cache hit)");
+
+        // Verifica se o ID inserido no segundo statement (índice 2) é o correto do cache
+        $insert_stmt_2 = $conn->statements[2];
+        $this->assertEquals(99, $insert_stmt_2->params[3], "O extintor_id na segunda insercao deve vir do cache (99)");
+    }
 }
