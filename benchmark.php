@@ -55,14 +55,16 @@ function benchmark_optimized($num_rows) {
     return microtime(true) - $start;
 }
 
-$rows = 50;
-echo "Running benchmark with $rows simulated rows...\n";
+if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === realpath(__FILE__)) {
+    $rows = 50;
+    echo "Running benchmark with $rows simulated rows...\n";
 
-$baseline = benchmark_baseline($rows);
-echo "Baseline (one email per row): " . number_format($baseline, 4) . " seconds\n";
+    $baseline = benchmark_baseline($rows);
+    echo "Baseline (one email per row): " . number_format($baseline, 4) . " seconds\n";
 
-$optimized = benchmark_optimized($rows);
-echo "Optimized (single batched email): " . number_format($optimized, 4) . " seconds\n";
+    $optimized = benchmark_optimized($rows);
+    echo "Optimized (single batched email): " . number_format($optimized, 4) . " seconds\n";
 
-$improvement = ($baseline - $optimized) / $baseline * 100;
-echo "Improvement: " . number_format($improvement, 2) . "%\n";
+    $improvement = ($baseline - $optimized) / $baseline * 100;
+    echo "Improvement: " . number_format($improvement, 2) . "%\n";
+}
