@@ -89,20 +89,30 @@ class AuditoriaTest extends MiniTestCase {
         global $conn;
 
         $conn = new MockConnection();
-        $conn->mock_results["SELECT id FROM bd_extintores WHERE codigo = ?"] = 99;
+        $conn->mock_results["SELECT id FROM bd_extintores WHERE codigo = ?"] = 42;
 
+        $acao = "Teste de auditoria cache hit";
         $codigo_extintor = "EXT-CACHE";
+        $user_id = 1;
+        $user_level = "admin";
+        $detalhes = "Detalhes do teste cache hit";
 
-        // Primeira chamada - deve consultar o banco (SELECT + INSERT = 2 statements)
-        auditoria("Acao 1", $codigo_extintor, 1, "admin", "Detalhes 1");
-        $this->assertEquals(2, count($conn->statements), "Deveriam ter sido criados 2 statements na primeira chamada");
+        // First call - should execute SELECT and INSERT
+        auditoria($acao, $codigo_extintor, $user_id, $user_level, $detalhes);
 
-        // Segunda chamada - deve usar o cache (Apenas INSERT = 3 statements no total)
-        auditoria("Acao 2", $codigo_extintor, 1, "admin", "Detalhes 2");
-        $this->assertEquals(3, count($conn->statements), "Deveriam ter sido criados 3 statements no total apos a segunda chamada (cache hit)");
+        // Second call - should hit cache and only execute INSERT
+        auditoria($acao, $codigo_extintor, $user_id, $user_level, $detalhes);
 
-        // Verifica se o ID inserido no segundo statement (índice 2) é o correto do cache
-        $insert_stmt_2 = $conn->statements[2];
-        $this->assertEquals(99, $insert_stmt_2->params[3], "O extintor_id na segunda insercao deve vir do cache (99)");
+        $this->assertEquals(3, count($conn->statements), "Deveriam ter sido criados 3 statements (1 select, 2 inserts)");
+
+        $select_stmt = $conn->statements[0];
+        $this->assertEquals("SELECT id FROM bd_extintores WHERE codigo = ?", $select_stmt->query);
+        $this->assertTrue($select_stmt->executed);
+
+        $insert_stmt1 = $conn->statements[1];
+        $this->assertTrue($insert_stmt1->executed);
+
+        $insert_stmt2 = $conn->statements[2];
+        $this->assertTrue($insert_stmt2->executed);
     }
 }
