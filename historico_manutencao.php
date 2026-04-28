@@ -19,24 +19,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $data_inicial = isset($_GET['data_inicial']) ? $_GET['data_inicial'] : '';
     $data_final = isset($_GET['data_final']) ? $_GET['data_final'] : '';
 
-    // Helper function to execute prepared statements with dynamic params
-    function execute_stmt($conn, $sql, $types, $params) {
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) return false;
-
-        if (!empty($params)) {
-            $bind_params = [];
-            foreach ($params as $key => $value) {
-                $bind_params[$key] = &$params[$key];
-            }
-            $stmt->bind_param($types, ...$bind_params);
-        }
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-        return $result;
-    }
-
+    // Build WHERE clauses safely to avoid code analyzer warnings
+    $where_sql = "bd_extintores.manutencao_n2 IS NOT NULL";
     $params = [];
     $types = "";
 
@@ -63,45 +47,49 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
         WHERE bd_extintores.manutencao_n2 IS NOT NULL";
 
     if (!empty($extintor_codigo)) {
-        $clause = " AND bd_extintores.codigo LIKE ?";
-        $sql_count .= $clause;
-        $sql_chart .= $clause;
-        $sql_paginated .= $clause;
+        $where_sql .= " AND bd_extintores.codigo LIKE ?";
         $params[] = "%" . $extintor_codigo . "%";
         $types .= "s";
     }
     if (!empty($predio)) {
-        $clause = " AND bd_extintores.Predio LIKE ?";
-        $sql_count .= $clause;
-        $sql_chart .= $clause;
-        $sql_paginated .= $clause;
+        $where_sql .= " AND bd_extintores.Predio LIKE ?";
         $params[] = "%" . $predio . "%";
         $types .= "s";
     }
     if ($cobertura === 'SIM') {
-        $clause = " AND bd_extintores.cobertura = 1";
-        $sql_count .= $clause;
-        $sql_chart .= $clause;
-        $sql_paginated .= $clause;
+        $where_sql .= " AND bd_extintores.cobertura = 1";
     }
     if (!empty($data_inicial)) {
-        $clause = " AND bd_extintores.manutencao_n2 >= ?";
-        $sql_count .= $clause;
-        $sql_chart .= $clause;
-        $sql_paginated .= $clause;
+        $where_sql .= " AND bd_extintores.manutencao_n2 >= ?";
         $params[] = $data_inicial;
         $types .= "s";
     }
     if (!empty($data_final)) {
-        $clause = " AND bd_extintores.manutencao_n2 <= ?";
-        $sql_count .= $clause;
-        $sql_chart .= $clause;
-        $sql_paginated .= $clause;
+        $where_sql .= " AND bd_extintores.manutencao_n2 <= ?";
         $params[] = $data_final;
         $types .= "s";
     }
 
+    // Helper function to execute prepared statements with dynamic params
+    function execute_stmt($conn, $sql, $types, $params) {
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) return false;
+
+        if (!empty($params)) {
+            $bind_params = [];
+            foreach ($params as $key => $value) {
+                $bind_params[$key] = &$params[$key];
+            }
+            $stmt->bind_param($types, ...$bind_params);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stmt->close();
+        return $result;
+    }
+
     // 1. Contar total de registros para a paginação
+    $sql_count = "SELECT COUNT(*) AS total FROM bd_extintores WHERE " . $where_sql;
     $result_count = execute_stmt($conn, $sql_count, $types, $params);
     $total_registros = $result_count ? $result_count->fetch_assoc()['total'] : 0;
 
@@ -113,7 +101,13 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $offset = ($pagina_atual - 1) * $itens_por_pagina;
 
     // 2. Buscar dados para o gráfico usando GROUP BY (evita carregar todos os dados em PHP)
-    $sql_chart .= " GROUP BY manutencao_n2 ORDER BY manutencao_n2 ASC";
+    $sql_chart = "
+        SELECT manutencao_n2 AS data_manutencao, COUNT(*) AS total
+        FROM bd_extintores
+        WHERE " . $where_sql . "
+        GROUP BY manutencao_n2
+        ORDER BY manutencao_n2 ASC
+    ";
     $result_chart = execute_stmt($conn, $sql_chart, $types, $params);
     $manutencoes_por_data = [];
     if ($result_chart) {
@@ -123,7 +117,24 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     }
 
     // 3. Buscar dados paginados para a tabela
-    $sql_paginated .= " ORDER BY bd_extintores.manutencao_n2 DESC LIMIT ? OFFSET ?";
+    $sql_paginated = "
+        SELECT 
+            bd_extintores.codigo AS extintor_codigo, 
+            bd_extintores.Local_Exato AS local_exato,
+            bd_extintores.Predio AS predio,
+            bd_extintores.cobertura,
+            CASE 
+                WHEN bd_extintores.usuario_n2 IS NULL OR bd_extintores.usuario_n2 = '' THEN 'Usuário removido'
+                ELSE bd_extintores.usuario_n2
+            END AS usuario_nome, 
+            bd_extintores.manutencao_n2 AS data_manutencao
+        FROM 
+            bd_extintores
+        WHERE 
+            " . $where_sql . "
+        ORDER BY bd_extintores.manutencao_n2 DESC
+        LIMIT ? OFFSET ?
+    ";
 
     // Add pagination params
     $paginated_params = $params;
