@@ -1,10 +1,10 @@
 <?php
 /**
- * Wrapper for testing resetar_senha.php without side effects.
+ * Wrapper for testing rejeitar_extintor.php without side effects.
  * We pass arguments to simulate different states.
  */
 
-class MockDBStreamResetarSenha {
+class MockDBStreamRejeitar {
     private $position;
     private $content;
 
@@ -13,11 +13,30 @@ class MockDBStreamResetarSenha {
 
         if (strpos($realPath, 'config/db_conexao.php') !== false) {
             $this->content = "<?php
-                class MockResetarSenhaStatement {
-                    public \$success = true;
-                    public \$error = 'mock_stmt_error';
+                class MockRejeitarResult {
+                    public \$num_rows = 1;
+                    public \$state;
 
                     public function __construct(\$state) {
+                        \$this->state = \$state;
+                        if (isset(\$state['extintor_not_found'])) {
+                            \$this->num_rows = 0;
+                        }
+                    }
+
+                    public function fetch_assoc() {
+                        return ['id' => 999];
+                    }
+                }
+
+                class MockRejeitarStatement {
+                    public \$success = true;
+                    public \$state = null;
+                    public \$query;
+
+                    public function __construct(\$state, \$query) {
+                        \$this->state = \$state;
+                        \$this->query = \$query;
                         if (isset(\$state['db_stmt_error'])) {
                             \$this->success = false;
                         }
@@ -26,15 +45,21 @@ class MockDBStreamResetarSenha {
                     public function bind_param(...\$args) { return true; }
 
                     public function execute() {
+                        if (\$this->query === 'DELETE FROM bd_extintores WHERE id = ?' && isset(\$this->state['db_delete_extintor_error'])) {
+                            return false;
+                        }
                         return \$this->success;
+                    }
+
+                    public function get_result() {
+                        return new MockRejeitarResult(\$this->state);
                     }
 
                     public function close() {}
                 }
 
-                class MockResetarSenhaMySQLi {
+                class MockRejeitarMySQLi {
                     public \$state;
-                    public \$error = 'mock_db_error';
 
                     public function __construct(\$state) {
                         \$this->state = \$state;
@@ -44,20 +69,14 @@ class MockDBStreamResetarSenha {
                         if (isset(\$this->state['db_prepare_error'])) {
                             return false;
                         }
-                        return new MockResetarSenhaStatement(\$this->state);
+                        return new MockRejeitarStatement(\$this->state, \$query);
                     }
 
                     public function close() {}
                 }
 
                 global \$test_state;
-                \$conn = new MockResetarSenhaMySQLi(\$test_state);
-            ?>";
-        } elseif (strpos($realPath, 'auditoria.php') !== false) {
-            $this->content = "<?php
-                function auditoria(\$acao, \$codigo_extintor, \$user_id, \$user_level, \$detalhes = '') {
-                    echo \"\\n[MOCK_AUDITORIA] \$acao | \$codigo_extintor | \$user_id | \$user_level | \$detalhes\\n\";
-                }
+                \$conn = new MockRejeitarMySQLi(\$test_state);
             ?>";
         } else {
             // Restore wrapper and intercept headers in the target file
@@ -65,19 +84,18 @@ class MockDBStreamResetarSenha {
             if (file_exists($realPath)) {
                 $content = file_get_contents($realPath);
 
-                // Simple regex to convert header(...) to echo "[MOCK_HEADER] ..."
+                // Simple regex to convert header(...) to echo "\n[MOCK_HEADER] ...\n"
                 $content = preg_replace('/header\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', 'echo "\n[MOCK_HEADER] $1\n"', $content);
                 // Replace filter_input so we can test it from CLI
-                $content = str_replace("filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT)", "(\$_POST['id'] ?? null)", $content);
-                $content = str_replace("filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT)", "(\$_GET['id'] ?? null)", $content);
+                $content = str_replace("filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS)", "(\$_POST['codigo'] ?? null)", $content);
                 $this->content = $content;
             } else {
                 stream_wrapper_unregister("file");
-                stream_wrapper_register("file", "MockDBStreamResetarSenha");
+                stream_wrapper_register("file", "MockDBStreamRejeitar");
                 return false;
             }
             stream_wrapper_unregister("file");
-            stream_wrapper_register("file", "MockDBStreamResetarSenha");
+            stream_wrapper_register("file", "MockDBStreamRejeitar");
         }
 
         $this->position = 0;
@@ -113,7 +131,7 @@ class MockDBStreamResetarSenha {
 
 // Intercept file inclusions
 stream_wrapper_unregister("file");
-stream_wrapper_register("file", "MockDBStreamResetarSenha");
+stream_wrapper_register("file", "MockDBStreamRejeitar");
 
 session_start();
 
@@ -132,10 +150,6 @@ if (isset($argv[1])) {
         $_POST = $state['post'];
     }
 
-    if (isset($state['get'])) {
-        $_GET = $state['get'];
-    }
-
     if (isset($state['server'])) {
         $_SERVER = array_merge($_SERVER, $state['server']);
     }
@@ -143,7 +157,7 @@ if (isset($argv[1])) {
 
 // Execute the target script
 try {
-    include __DIR__ . '/../resetar_senha.php';
+    include __DIR__ . '/../rejeitar_extintor.php';
 } catch (Throwable $e) {
     echo "EXCEPTION: " . $e->getMessage();
 }

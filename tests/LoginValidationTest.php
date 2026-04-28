@@ -3,54 +3,39 @@ require_once __DIR__ . '/MockDatabase.php';
 
 class LoginValidationTest extends MiniTestCase {
 
-    private function getWrappedLoginCode() {
-        $login_code = file_get_contents(__DIR__ . '/../login.php');
-
-        // Remove session calls
-        $login_code = str_replace('session_start();', '//session_start();', $login_code);
-        $login_code = str_replace('session_regenerate_id(true);', '//session_regenerate_id(true);', $login_code);
-
-        // Fix path to db_conexao
-        $login_code = str_replace("require_once __DIR__ . '/config/db_conexao.php';", "", $login_code);
-
-        // Replace header and exit
-        $login_code = preg_replace('/header\(.*\);/', '$GLOBALS["redirected"] = true;', $login_code);
-        $login_code = str_replace('exit();', 'return;', $login_code);
-
-        // Replace filter_input for POST as it doesn't work well in CLI
-        $login_code = preg_replace(
-            '/filter_input\s*\(\s*INPUT_POST\s*,\s*\'(\w+)\'\s*,\s*FILTER_SANITIZE_SPECIAL_CHARS\s*\)/',
-            'htmlspecialchars((string)($_POST[\'$1\'] ?? ""), ENT_QUOTES, "UTF-8")',
-            $login_code
-        );
-        $login_code = preg_replace(
-            '/filter_input\s*\(\s*INPUT_POST\s*,\s*\'(\w+)\'\s*,\s*FILTER_DEFAULT\s*\)/',
-            '($_POST[\'$1\'] ?? "")',
-            $login_code
-        );
-
-        // Inject global $conn
-        $login_code = str_replace('<?php', '<?php global $conn, $error;', $login_code);
-
-        return $login_code;
-    }
-
     public function testLoginConsolidatedValidation() {
         $mockConn = new MockConnection();
         $GLOBALS['conn'] = $mockConn;
 
-        // Mock SESSION
-        $_SESSION = [
+        // Ensure db_conexao doesn't overwrite $conn, but we need it required
+        // so we require login.php directly which will require db_conexao
+        // BUT, wait, db_conexao might overwrite $conn. We can just require login.php
+        // and then pass our mockConn to process_login.
+
+        // Actually, if we just use a wrapper to include login.php it might be better,
+        // but since we wrapped login.php in a function `process_login`, we can just
+        // include it. `db_conexao.php` sets `$conn = new mysqli(...)` which might fail
+        // if not configured. We can suppress it or it's already mocked in runner.
+        // Wait, tests/runner.php or similar already has a strategy for db_conexao?
+        // Let's just include login.php and suppress errors, then inject $mockConn.
+
+        $session = [
             'csrf_token' => 'test_csrf'
         ];
+        $_SESSION = $session; // Needed for login.php's top level code
 
-        // Mock POST
-        $_POST = [
+        // Include the target file, suppressing the exception from db_conexao if it fails
+        try {
+            @include_once __DIR__ . '/../login.php';
+        } catch (Exception $e) {
+            // Ignore DB connection errors in db_conexao.php during tests
+        }
+
+        $post = [
             'csrf_token' => 'test_csrf',
             'username' => 'testuser',
             'password' => 'testpass'
         ];
-        $_SERVER['REQUEST_METHOD'] = 'POST';
 
         // Result for login query
         $mockConn->mock_query_results["SELECT * FROM usuarios WHERE username = ?"] = [
@@ -62,39 +47,41 @@ class LoginValidationTest extends MiniTestCase {
             ]
         ];
 
-        ob_start();
-        $login_code = $this->getWrappedLoginCode();
         $error = null;
-        eval('?>' . $login_code);
-        ob_end_clean();
+        $result = process_login($mockConn, $post, $session, $error);
 
-        $this->assertTrue(isset($_SESSION['user_id']), "User ID should be set in session");
-        $this->assertEquals(1, $_SESSION['user_id']);
-        $this->assertEquals('admin', $_SESSION['user_level']);
-        $this->assertEquals('testuser', $_SESSION['user_name']);
+        $this->assertTrue($result, "process_login should return true on success");
+        $this->assertTrue(isset($session['user_id']), "User ID should be set in session");
+        $this->assertEquals(1, $session['user_id']);
+        $this->assertEquals('admin', $session['user_level']);
+        $this->assertEquals('testuser', $session['user_name']);
     }
 
     public function testLoginEmptyFields() {
         $mockConn = new MockConnection();
         $GLOBALS['conn'] = $mockConn;
 
-        $_SESSION = [
+        $session = [
             'csrf_token' => 'test_csrf'
         ];
+        $_SESSION = $session;
 
-        $_POST = [
+        try {
+            @include_once __DIR__ . '/../login.php';
+        } catch (Exception $e) {
+            // Ignore DB connection errors in db_conexao.php during tests
+        }
+
+        $post = [
             'csrf_token' => 'test_csrf',
             'username' => '',
             'password' => ''
         ];
-        $_SERVER['REQUEST_METHOD'] = 'POST';
 
-        ob_start();
-        $login_code = $this->getWrappedLoginCode();
         $error = null;
-        eval('?>' . $login_code);
-        ob_end_clean();
+        $result = process_login($mockConn, $post, $session, $error);
 
+        $this->assertEquals(false, $result, "process_login should return false on empty fields");
         $this->assertEquals("Preencha todos os campos.", $error);
     }
 }
