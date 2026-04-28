@@ -12,13 +12,17 @@ if (!function_exists('process_login')) {
         unset($session['csrf_token']); // Invalidar o token após o uso
         $session['csrf_token'] = bin2hex(random_bytes(32)); // Gerar novo para próxima tentativa
 
-        $username = htmlspecialchars((string)($post['username'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $password = (string)($post['password'] ?? '');
+        $username = (string)filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
+        // Process password as a raw string and apply basic length limit to prevent DoS
+        $password = (string)filter_input(INPUT_POST, 'password', FILTER_DEFAULT);
 
         if (empty($username) || empty($password)) {
             $error = "Preencha todos os campos.";
-            return false;
-        }
+        } elseif (strlen($username) > 255 || strlen($password) > 255) {
+            $error = "Tamanho de entrada excedido.";
+        } else {
+            $sql = "SELECT * FROM usuarios WHERE username = ?";
+            $stmt = $conn->prepare($sql);
 
         $sql = "SELECT * FROM usuarios WHERE username = ?";
         $stmt = $conn->prepare($sql);
