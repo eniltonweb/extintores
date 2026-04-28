@@ -10,20 +10,24 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
-    $nova_senha = password_hash($_POST['nova_senha'], PASSWORD_DEFAULT);
-
-    // Prevenir SQL Injection usando prepared statements
-    $sql = "UPDATE usuarios SET password = ? WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("si", $nova_senha, $id);
-
-    if ($stmt->execute()) {
-        $message = "Senha resetada com sucesso.";
+    if (empty($_SESSION['csrf_token']) || !isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $message = "Erro de validação CSRF.";
     } else {
-        $message = "Erro ao resetar senha: " . $stmt->error;
+        $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+        $nova_senha = password_hash($_POST['nova_senha'], PASSWORD_DEFAULT);
+
+        // Prevenir SQL Injection usando prepared statements
+        $sql = "UPDATE usuarios SET password = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("si", $nova_senha, $id);
+
+        if ($stmt->execute()) {
+            $message = "Senha resetada com sucesso.";
+        } else {
+            $message = "Erro ao resetar senha: " . $stmt->error;
+        }
+        $stmt->close();
     }
-    $stmt->close();
 }
 
 if (isset($_GET['id'])) {
@@ -57,7 +61,8 @@ if (isset($_GET['id'])) {
         <?php endif; ?>
 
         <form method="POST" action="resetar_senha.php" class="mb-4">
-            <input type="hidden" name="id" value="<?php echo htmlspecialchars($id); ?>">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
+            <input type="hidden" name="id" value="<?php echo htmlspecialchars($id ?? ''); ?>">
             <div class="form-group">
                 <label for="nova_senha">Nova Senha:</label>
                 <input type="password" class="form-control" id="nova_senha" name="nova_senha" required>
