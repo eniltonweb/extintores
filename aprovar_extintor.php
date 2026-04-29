@@ -6,11 +6,11 @@ if (!function_exists('aprovar_extintor_logic')) {
         }
 
         if ($server['REQUEST_METHOD'] !== 'POST') {
-            return 'Location: aprovar_extintores.php?message=' . urlencode('Erro: Método inválido.');
+            return 'Location: aprovar_extintores.php?message=Erro:+Método+inválido.';
         }
 
         if (!isset($post['csrf_token']) || !hash_equals($session['csrf_token'] ?? '', $post['csrf_token'])) {
-            return 'Location: aprovar_extintores.php?message=' . urlencode('Erro: Falha na validação de segurança.');
+            return 'Location: aprovar_extintores.php?message=Erro:+Falha+na+validação+de+segurança.';
         }
 
         if (isset($post['codigo'])) {
@@ -28,16 +28,16 @@ if (!function_exists('aprovar_extintor_logic')) {
                         auditoria('Aprovação de Extintor', $codigo, $session['user_id'], $session['user_level'], 'Extintor aprovado com sucesso');
                     }
                     $stmt_aprovar->close();
-                    return 'Location: aprovar_extintores.php?message=' . urlencode('Extintor aprovado com sucesso.');
+                    return 'Location: aprovar_extintores.php?message=Extintor+aprovado+com+sucesso.';
                 } else {
                     $stmt_aprovar->close();
-                    return 'Location: aprovar_extintores.php?message=' . urlencode('Erro: Não foi possível aprovar o extintor.');
+                    return 'Location: aprovar_extintores.php?message=Erro:+Não+foi+possível+aprovar+o+extintor.';
                 }
             } else {
-                return 'Location: aprovar_extintores.php?message=' . urlencode('Erro: Não foi possível preparar o statement para aprovação do extintor.');
+                return 'Location: aprovar_extintores.php?message=Erro:+Não+foi+possível+preparar+o+statement+para+aprovação+do+extintor.';
             }
         } else {
-            return 'Location: aprovar_extintores.php?message=' . urlencode('Erro: Código do extintor não encontrado.');
+            return 'Location: aprovar_extintores.php?message=Erro:+Código+do+extintor+não+encontrado.';
         }
     }
 }
@@ -53,23 +53,7 @@ if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) 
         $conn->close();
     }
 
-            // Redirecionar com mensagem de sucesso
-            header('Location: aprovar_extintores.php?message=Extintor+aprovado+com+sucesso.');
-            exit();
-        } else {
-            // Redirecionar com mensagem de erro
-            header('Location: aprovar_extintores.php?message=Erro:+Não+foi+possível+aprovar+o+extintor.');
-            exit();
-        }
-        $stmt_aprovar->close();
-    } else {
-        // Redirecionar com mensagem de erro caso o statement não possa ser criado
-        header('Location: aprovar_extintores.php?message=Erro:+Não+foi+possível+preparar+o+statement+para+aprovação+do+extintor.');
-        exit();
-    }
-} else {
-    // Redirecionar caso o código do extintor não seja passado
-    header('Location: aprovar_extintores.php?message=Erro:+Código+do+extintor+não+encontrado.');
+    header($redirect);
     exit();
 }
 ?>

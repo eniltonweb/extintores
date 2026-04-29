@@ -54,8 +54,10 @@ class MockDBStreamAprovar {
             ?>";
         } elseif (strpos($realPath, 'auditoria.php') !== false) {
             $this->content = "<?php
-                function auditoria(\$acao, \$codigo_extintor, \$user_id, \$user_level, \$detalhes = '') {
-                    echo \"\\n[MOCK_AUDITORIA] \$acao | \$codigo_extintor | \$user_id | \$user_level | \$detalhes\\n\";
+                if (!function_exists('auditoria')) {
+                    function auditoria(\$acao, \$codigo_extintor, \$user_id, \$user_level, \$detalhes = '') {
+                        echo \"\\n[MOCK_AUDITORIA] \$acao | \$codigo_extintor | \$user_id | \$user_level | \$detalhes\\n\";
+                    }
                 }
             ?>";
         } else {
@@ -65,7 +67,9 @@ class MockDBStreamAprovar {
                 $content = file_get_contents($realPath);
 
                 // Simple regex to convert header(...) to echo "[MOCK_HEADER] ..."
-                $content = preg_replace('/header\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', 'echo "\n[MOCK_HEADER] $1\n"', $content);
+                $content = preg_replace('/(?<!->|::)\bheader\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/i', 'echo "\n[MOCK_HEADER] $1\n"', $content);
+                $content = preg_replace('/(?<!->|::)\bheader\s*\(\s*(\$redirect)\s*\)/i', 'echo "\n[MOCK_HEADER] " . $1 . "\n"', $content);
+
                 // Replace filter_input so we can test it from CLI
                 $content = str_replace("filter_input(INPUT_POST, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS)", "(\$_POST['codigo'] ?? null)", $content);
                 $this->content = $content;
@@ -137,7 +141,9 @@ if (isset($argv[1])) {
 
 // Execute the target script
 try {
-    include __DIR__ . '/../aprovar_extintor.php';
+    $target = realpath(__DIR__ . '/../aprovar_extintor.php');
+    $_SERVER['SCRIPT_FILENAME'] = $target;
+    include $target;
 } catch (Throwable $e) {
     echo "EXCEPTION: " . $e->getMessage();
 }
