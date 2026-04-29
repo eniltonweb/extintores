@@ -55,6 +55,15 @@ class MockDBStreamDashboard {
                 class MockMySQLi {
                     public function set_charset(\$charset) {}
                     public function query(\$query) {
+                        if (strpos(\$query, 'UNION ALL') !== false) {
+                            return new MockMySQLiResult([
+                                ['source' => 'manutencao', 'label' => 'Preventiva', 'total' => 10],
+                                ['source' => 'manutencao', 'label' => 'Corretiva', 'total' => 5],
+                                ['source' => 'proxima', 'label' => '2025-01-01', 'total' => 20],
+                                ['source' => 'extintores', 'label' => 'AP', 'total' => 30],
+                                ['source' => 'extintores', 'label' => 'CO2', 'total' => 10]
+                            ]);
+                        }
                         if (strpos(\$query, 'historico_manutencao') !== false) {
                             return new MockMySQLiResult([
                                 ['tipo_manutencao' => 'Preventiva', 'total' => 10],
