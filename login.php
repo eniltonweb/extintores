@@ -12,17 +12,19 @@ if (!function_exists('process_login')) {
         unset($session['csrf_token']); // Invalidar o token após o uso
         $session['csrf_token'] = bin2hex(random_bytes(32)); // Gerar novo para próxima tentativa
 
-        $username = (string)filter_input(INPUT_POST, 'username', FILTER_SANITIZE_SPECIAL_CHARS);
+        $username = (string)filter_var($post['username'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS);
         // Process password as a raw string and apply basic length limit to prevent DoS
-        $password = (string)filter_input(INPUT_POST, 'password', FILTER_DEFAULT);
+        $password = (string)filter_var($post['password'] ?? '', FILTER_DEFAULT);
 
         if (empty($username) || empty($password)) {
             $error = "Preencha todos os campos.";
-        } elseif (strlen($username) > 255 || strlen($password) > 255) {
+            return false;
+        }
+
+        if (strlen($username) > 255 || strlen($password) > 255) {
             $error = "Tamanho de entrada excedido.";
-        } else {
-            $sql = "SELECT * FROM usuarios WHERE username = ?";
-            $stmt = $conn->prepare($sql);
+            return false;
+        }
 
         $sql = "SELECT * FROM usuarios WHERE username = ?";
         $stmt = $conn->prepare($sql);
@@ -38,23 +40,25 @@ if (!function_exists('process_login')) {
         $stmt->execute();
         $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $user = $result->fetch_assoc();
-
-            if (password_verify($password, $user['password'])) {
-                $session['user_id'] = $user['id'];
-                $session['user_level'] = $user['nivel_acesso'];
-                $session['user_name'] = $user['username'];
-                $stmt->close();
-                return true;
-            } else {
-                $error = "Credenciais inválidas.";
-            }
-        } else {
+        if ($result->num_rows === 0) {
             $error = "Credenciais inválidas.";
+            $stmt->close();
+            return false;
         }
+
+        $user = $result->fetch_assoc();
+
+        if (!password_verify($password, $user['password'])) {
+            $error = "Credenciais inválidas.";
+            $stmt->close();
+            return false;
+        }
+
+        $session['user_id'] = $user['id'];
+        $session['user_level'] = $user['nivel_acesso'];
+        $session['user_name'] = $user['username'];
         $stmt->close();
-        return false;
+        return true;
     }
 }
 
