@@ -25,36 +25,45 @@ if (file_exists($cacheFile) && (time() - filemtime($cacheFile) < $cacheTime)) {
 if (!is_array($dashboard_data)) {
     require_once __DIR__ . '/config/db_conexao.php';
 
-    // Consultar dados de manutenções realizadas
-    $sql_manutencao = "SELECT tipo_manutencao, COUNT(*) AS total FROM historico_manutencao GROUP BY tipo_manutencao";
-    $result_manutencao = $conn->query($sql_manutencao);
+    // Consultar dados agregados em uma única query para melhor performance
+    $sql_consolidado = "
+        SELECT 'manutencao' AS source, tipo_manutencao AS label, COUNT(*) AS total
+        FROM historico_manutencao
+        GROUP BY tipo_manutencao
+
+        UNION ALL
+
+        SELECT 'proxima' AS source, proxima_manutencao_n2 AS label, COUNT(*) AS total
+        FROM bd_extintores
+        WHERE proxima_manutencao_n2 IS NOT NULL
+        GROUP BY proxima_manutencao_n2
+
+        UNION ALL
+
+        SELECT 'extintores' AS source, tip_extintor AS label, COUNT(*) AS total
+        FROM bd_extintores
+        GROUP BY tip_extintor
+    ";
+
+    $result = $conn->query($sql_consolidado);
 
     $manutencoes = [];
-    if ($result_manutencao) {
-        while ($row = $result_manutencao->fetch_assoc()) {
-            $manutencoes[] = $row;
-        }
-    }
-
-    // Consultar dados de próximas manutenções
-    $sql_proximas = "SELECT proxima_manutencao_n2, COUNT(*) AS total FROM bd_extintores WHERE proxima_manutencao_n2 IS NOT NULL GROUP BY proxima_manutencao_n2";
-    $result_proximas = $conn->query($sql_proximas);
-
     $proximas_manutencoes = [];
-    if ($result_proximas) {
-        while ($row = $result_proximas->fetch_assoc()) {
-            $proximas_manutencoes[] = $row;
-        }
-    }
-
-    // Consultar dados de tipos de extintores
-    $sql_extintores = "SELECT tip_extintor, COUNT(*) AS total FROM bd_extintores GROUP BY tip_extintor";
-    $result_extintores = $conn->query($sql_extintores);
-
     $extintores = [];
-    if ($result_extintores) {
-        while ($row = $result_extintores->fetch_assoc()) {
-            $extintores[] = $row;
+
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            switch ($row['source']) {
+                case 'manutencao':
+                    $manutencoes[] = ['tipo_manutencao' => $row['label'], 'total' => $row['total']];
+                    break;
+                case 'proxima':
+                    $proximas_manutencoes[] = ['proxima_manutencao_n2' => $row['label'], 'total' => $row['total']];
+                    break;
+                case 'extintores':
+                    $extintores[] = ['tip_extintor' => $row['label'], 'total' => $row['total']];
+                    break;
+            }
         }
     }
 
