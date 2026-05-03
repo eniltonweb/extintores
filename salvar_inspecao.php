@@ -55,6 +55,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $foto_nome = null;
     $upload_warning = '';
     if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
+        // Validar o tamanho do arquivo (limite de 5MB)
+        $max_file_size = 5 * 1024 * 1024; // 5MB em bytes
+        if ($foto['size'] > $max_file_size) {
+            error_log("Tentativa de upload de arquivo muito grande em salvar_inspecao.php. Tamanho: " . $foto['size'] . " bytes.");
+            header('Location: formulario_inspecao.php?codigo=' . urlencode($codigo) . '&message=' . urlencode('Erro: O arquivo excede o tamanho máximo permitido de 5MB.'));
+            exit();
+        }
+
         // Validar extensão da foto
         $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         $file_extension = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
