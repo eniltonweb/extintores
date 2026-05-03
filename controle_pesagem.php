@@ -110,7 +110,7 @@ if (!isset($_SESSION['nome_usuario'])){
     </thead>
     <tbody>
       <?php
-      $pesagens = $conn->query("SELECT p.*, e.codigo FROM pesagens_extintores p INNER JOIN bd_extintores e ON p.id_extintor = e.id ORDER BY p.data_pesagem DESC");
+      $pesagens = $conn->query("SELECT p.*, e.codigo FROM pesagens_extintores p INNER JOIN bd_extintores e ON p.id_extintor = e.id ORDER BY p.data_pesagem DESC LIMIT 100");
       while($pesagem = $pesagens->fetch_assoc()){
         $pesagem = array_map('htmlspecialchars', $pesagem);
         $situacao = $pesagem['situacao'] == 'Aprovado' ? '✅ OK' : '❌ NOK';
