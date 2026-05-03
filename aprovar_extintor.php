@@ -14,7 +14,6 @@ if (!function_exists('aprovar_extintor_logic')) {
         }
 
         if (isset($post['codigo'])) {
-            // Replicate filter_input behavior manually or use $_POST to support testing easily
             $codigo = filter_var($post['codigo'], FILTER_SANITIZE_SPECIAL_CHARS);
 
             $sql_aprovar = "UPDATE bd_extintores SET status_aprovacao = 'Aprovado' WHERE codigo = ?";
