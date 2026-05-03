@@ -3,7 +3,7 @@ session_start();
 require_once __DIR__ . "/config/db_conexao.php";
 
 // Verificação de usuário logado
-if (!isset($_SESSION['nome_usuario'])){
+if (!isset($_SESSION['user_id'])){
   header("Location: login.php");
   exit;
 }
