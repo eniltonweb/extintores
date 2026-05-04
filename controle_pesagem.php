@@ -3,7 +3,7 @@ session_start();
 require_once __DIR__ . "/config/db_conexao.php";
 
 // Verificação de usuário logado
-if (!isset($_SESSION['nome_usuario'])){
+if (!isset($_SESSION['user_id'])){
   header("Location: login.php");
   exit;
 }
@@ -110,7 +110,7 @@ if (!isset($_SESSION['nome_usuario'])){
     </thead>
     <tbody>
       <?php
-      $pesagens = $conn->query("SELECT p.*, e.codigo FROM pesagens_extintores p INNER JOIN bd_extintores e ON p.id_extintor = e.id ORDER BY p.data_pesagem DESC");
+      $pesagens = $conn->query("SELECT p.*, e.codigo FROM pesagens_extintores p INNER JOIN bd_extintores e ON p.id_extintor = e.id ORDER BY p.data_pesagem DESC LIMIT 100");
       while($pesagem = $pesagens->fetch_assoc()){
         $pesagem = array_map('htmlspecialchars', $pesagem);
         $situacao = $pesagem['situacao'] == 'Aprovado' ? '✅ OK' : '❌ NOK';

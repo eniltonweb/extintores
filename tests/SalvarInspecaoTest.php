@@ -25,6 +25,38 @@ class SalvarInspecaoTest extends MiniTestCase {
         return trim(implode("\n", $cleanLines));
     }
 
+    public function testUploadFileTooLarge() {
+        $state = [
+            'session' => [
+                'user_id' => 1,
+                'user_level' => 'bombeiro',
+                'csrf_token' => 'valid_token'
+            ],
+            'server' => ['REQUEST_METHOD' => 'POST'],
+            'post' => [
+                'codigo' => '123',
+                'csrf_token' => 'valid_token'
+            ],
+            'files' => [
+                'foto' => [
+                    'name' => 'test.jpg', // Valid extension
+                    'type' => 'image/jpeg',
+                    'tmp_name' => 'CREATE_IMAGE_FILE', // Valid mime (image)
+                    'error' => 0,
+                    'size' => 6 * 1024 * 1024 // 6MB, exceeds 5MB limit
+                ]
+            ]
+        ];
+
+        $result = $this->runWrapper($state);
+        $cleanOutput = $this->stripPhpNotices($result['output']);
+
+        $this->assertTrue(
+            strpos($cleanOutput, 'O arquivo excede o tamanho máximo permitido') !== false || strpos($cleanOutput, 'Tentativa de upload de arquivo muito grande') !== false,
+            "Expected error message for file exceeding size limit. Got: " . $cleanOutput
+        );
+    }
+
     public function testUploadInvalidExtension() {
         $state = [
             'session' => [

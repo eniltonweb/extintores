@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
 $user_level = $_SESSION['user_level'];
 
 // Buscar extintores com status "Em espera"
-$sql_extintores = "SELECT * FROM bd_extintores WHERE status_aprovacao = 'Em espera'";
+$sql_extintores = "SELECT codigo, Predio, Local_Exato, tip_extintor, carga FROM bd_extintores WHERE status_aprovacao = 'Em espera'";
 $result_extintores = $conn->query($sql_extintores);
 
 ?>
