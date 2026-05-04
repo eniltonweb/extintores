@@ -1,5 +1,12 @@
 <?php
+session_start();
 require_once __DIR__ . '/config/db_conexao.php';
+
+if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'bombeiro') {
+    http_response_code(403);
+    echo json_encode(['proximo_codigo' => '', 'erro' => 'Não autorizado']);
+    exit();
+}
 
 $predio = filter_input(INPUT_GET, 'predio', FILTER_SANITIZE_SPECIAL_CHARS);
 

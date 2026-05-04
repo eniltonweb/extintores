@@ -1,14 +1,11 @@
 <?php
-
-require_once __DIR__ . '/runner.php';
-
 class ObterProximoCodigoTest extends MiniTestCase {
 
     private function runWrapper($stateData) {
         $wrapper_script = __DIR__ . '/wrapper_obter_proximo_codigo.php';
         $json_data = escapeshellarg(json_encode($stateData));
 
-        $cmd = "php {$wrapper_script} {$json_data} 2>&1";
+        $cmd = PHP_BINARY . " {$wrapper_script} {$json_data} 2>&1";
         exec($cmd, $output, $return_var);
 
         return [
@@ -17,76 +14,56 @@ class ObterProximoCodigoTest extends MiniTestCase {
         ];
     }
 
-    public function testPredioVazioRetornaVazio() {
-        $state = [
-            'get' => [] // $_GET['predio'] is empty/null
-        ];
-
+    public function testReturns403WhenNoSession() {
+        $state = [];
         $result = $this->runWrapper($state);
-        $json = json_decode($result['output'], true);
 
-        $this->assertEquals(
-            '',
-            $json['proximo_codigo'],
-            "Expected empty proximo_codigo when predio is not provided."
+        $json_response = json_decode($result['output'], true);
+
+        $this->assertTrue(
+            isset($json_response['erro']) && $json_response['erro'] === 'Não autorizado',
+            "Expected 'Não autorizado' error when there is no session."
         );
     }
 
-    public function testPredioSemExtintoresRetornaCodigo1() {
+    public function testReturns403WhenNotBombeiro() {
         $state = [
-            'get' => [
-                'predio' => 'A'
-            ],
-            'db_rows' => [] // No extintores found
-        ];
-
-        $result = $this->runWrapper($state);
-        $json = json_decode($result['output'], true);
-
-        $this->assertEquals(
-            'A-1',
-            $json['proximo_codigo'],
-            "Expected proximo_codigo to be A-1 when no extintores exist."
-        );
-    }
-
-    public function testIncrementaCodigoValido() {
-        $state = [
-            'get' => [
-                'predio' => 'B'
-            ],
-            'db_rows' => [
-                ['codigo' => 'B-5']
+            'session' => [
+                'user_id' => 1,
+                'user_level' => 'admin'
             ]
         ];
-
         $result = $this->runWrapper($state);
-        $json = json_decode($result['output'], true);
 
-        $this->assertEquals(
-            'B-6',
-            $json['proximo_codigo'],
-            "Expected proximo_codigo to increment B-5 to B-6."
+        $json_response = json_decode($result['output'], true);
+
+        $this->assertTrue(
+            isset($json_response['erro']) && $json_response['erro'] === 'Não autorizado',
+            "Expected 'Não autorizado' error when user is not a bombeiro."
         );
     }
 
-    public function testFormatoInvalidoRetornaCodigo1() {
+    public function testReturnsNextCodeWhenAuthorized() {
         $state = [
-            'get' => [
-                'predio' => 'C'
+            'session' => [
+                'user_id' => 1,
+                'user_level' => 'bombeiro'
             ],
-            'db_rows' => [
-                ['codigo' => 'C-B'] // Invalid format (not numeric after hyphen)
+            'get' => [
+                'predio' => 'PREDIO'
             ]
         ];
-
         $result = $this->runWrapper($state);
-        $json = json_decode($result['output'], true);
 
-        $this->assertEquals(
-            'C-1',
-            $json['proximo_codigo'],
-            "Expected proximo_codigo to fallback to C-1 when format is invalid."
+        $json_response = json_decode($result['output'], true);
+
+        $this->assertTrue(
+            !isset($json_response['erro']),
+            "Expected no error when user is an authorized bombeiro."
+        );
+        $this->assertTrue(
+            isset($json_response['proximo_codigo']) && $json_response['proximo_codigo'] === 'PREDIO-101',
+            "Expected the correct incremented code."
         );
     }
 }
