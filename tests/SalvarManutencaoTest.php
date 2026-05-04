@@ -85,9 +85,14 @@ class SalvarManutencaoTest extends MiniTestCase {
         $conn = new class extends MockConnection {
             public $error = "Mock prepare error";
             public function prepare($query) {
+                if (strpos($query, 'SELECT 1 FROM liberacao_manutencao') !== false) {
+                    return parent::prepare($query);
+                }
                 return false;
             }
         };
+        $conn->mock_query_results["SELECT 1 FROM liberacao_manutencao WHERE codigo_extintor = ? AND liberado_para = 'fornecedor' LIMIT 1"] = [['1' => 1]];
+
         $session = [
             'user_id' => 1,
             'user_level' => 'fornecedor',
@@ -114,11 +119,15 @@ class SalvarManutencaoTest extends MiniTestCase {
         $conn = new class extends MockConnection {
             public function prepare($query) {
                 $stmt = parent::prepare($query);
-                $stmt->executeResult = false;
-                $stmt->error = "Mock execute error";
+                if (strpos($query, 'SELECT 1 FROM liberacao_manutencao') === false) {
+                    $stmt->executeResult = false;
+                    $stmt->error = "Mock execute error";
+                }
                 return $stmt;
             }
         };
+        $conn->mock_query_results["SELECT 1 FROM liberacao_manutencao WHERE codigo_extintor = ? AND liberado_para = 'fornecedor' LIMIT 1"] = [['1' => 1]];
+
         $session = [
             'user_id' => 1,
             'user_level' => 'fornecedor',
@@ -143,6 +152,8 @@ class SalvarManutencaoTest extends MiniTestCase {
 
     public function testProcessesWithValidCsrfToken() {
         $conn = new MockConnection();
+        $conn->mock_query_results["SELECT 1 FROM liberacao_manutencao WHERE codigo_extintor = ? AND liberado_para = 'fornecedor' LIMIT 1"] = [['1' => 1]];
+
         $session = [
             'user_id' => 1,
             'user_level' => 'fornecedor',
@@ -160,5 +171,29 @@ class SalvarManutencaoTest extends MiniTestCase {
         $result = salvar_manutencao_logic($conn, $session, $post, $server);
 
         $this->assertEquals('Location: formulario_manutencao.php?message=Manuten%C3%A7%C3%A3o+e+pr%C3%B3xima+manuten%C3%A7%C3%A3o+registradas+com+sucesso%21+Dias+para+expirar+atualizados+com+sucesso%21', $result);
+    }
+
+    public function testRedirectsWhenNotAuthorized() {
+        $conn = new MockConnection();
+        // Não popula mock_query_results para a consulta de autorização, simulando falha/acesso negado
+        $conn->mock_query_results["SELECT 1 FROM liberacao_manutencao WHERE codigo_extintor = ? AND liberado_para = 'fornecedor' LIMIT 1"] = [];
+
+        $session = [
+            'user_id' => 1,
+            'user_level' => 'fornecedor',
+            'user_name' => 'testuser',
+            'csrf_token' => 'valid_token'
+        ];
+        $post = [
+            'csrf_token' => 'valid_token',
+            'codigo' => 'EXT001',
+            'manutencao_n2' => '1',
+            'cobertura' => '0'
+        ];
+        $server = ['REQUEST_METHOD' => 'POST'];
+
+        $result = salvar_manutencao_logic($conn, $session, $post, $server);
+
+        $this->assertEquals('Location: formulario_manutencao.php?message=Erro%3A+Acesso+negado.+O+extintor+n%C3%A3o+est%C3%A1+liberado+para+manuten%C3%A7%C3%A3o+ou+n%C3%A3o+existe.', $result);
     }
 }

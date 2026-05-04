@@ -23,6 +23,29 @@ if (!function_exists('salvar_manutencao_logic')) {
             return 'Location: formulario_manutencao.php?message=' . urlencode('Erro: Código do extintor não especificado.');
         }
 
+        // Verificar autorização: o extintor deve estar liberado para manutenção por fornecedor
+        $sql_check_auth = "SELECT 1 FROM liberacao_manutencao WHERE codigo_extintor = ? AND liberado_para = 'fornecedor' LIMIT 1";
+        $stmt_check_auth = $conn->prepare($sql_check_auth);
+
+        if ($stmt_check_auth === false) {
+            error_log("Erro ao preparar consulta para verificar autorização: " . $conn->error);
+            return 'Location: formulario_manutencao.php?message=' . urlencode('Erro interno ao verificar autorização.');
+        }
+
+        $stmt_check_auth->bind_param("s", $codigo);
+        $stmt_check_auth->execute();
+        $result_auth = $stmt_check_auth->get_result();
+        $authorized = false;
+
+        if ($result_auth && $result_auth->num_rows > 0) {
+            $authorized = true;
+        }
+        $stmt_check_auth->close();
+
+        if (!$authorized) {
+            return 'Location: formulario_manutencao.php?message=' . urlencode('Erro: Acesso negado. O extintor não está liberado para manutenção ou não existe.');
+        }
+
         // Capturar o nome do usuário logado a partir da sessão
         $username = $session['user_name'] ?? null;
 
