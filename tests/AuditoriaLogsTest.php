@@ -8,6 +8,40 @@ try {
 } catch (Exception $e) {}
 
 class AuditoriaLogsTest extends MiniTestCase {
+    public function testRedirectsWhenNoSession() {
+        $state = ['session' => []];
+        $output = shell_exec(PHP_BINARY . ' ' . __DIR__ . '/wrapper_auditoria_logs.php ' . escapeshellarg(json_encode($state)));
+        $this->assertTrue(strpos($output, '[TEST_HEADERS_SENT]') !== false, "Output does not contain header marker");
+    }
+
+    public function testRedirectsWhenNotAdmin() {
+        $state = [
+            'session' => [
+                'user_id' => 1,
+                'user_level' => 'fornecedor',
+                'csrf_token' => 'test_token'
+            ]
+        ];
+        $output = shell_exec(PHP_BINARY . ' ' . __DIR__ . '/wrapper_auditoria_logs.php ' . escapeshellarg(json_encode($state)));
+        $this->assertTrue(strpos($output, '[TEST_HEADERS_SENT]') !== false, "Output does not contain header marker");
+    }
+
+    public function testCsrfValidationFails() {
+        $state = [
+            'session' => [
+                'user_id' => 1,
+                'user_level' => 'admin',
+                'csrf_token' => 'valid_token'
+            ],
+            'post' => [
+                'csrf_token' => 'invalid_token',
+                'delete_all' => '1'
+            ]
+        ];
+        $output = shell_exec(PHP_BINARY . ' ' . __DIR__ . '/wrapper_auditoria_logs.php ' . escapeshellarg(json_encode($state)));
+        $this->assertTrue(strpos($output, 'Erro de validação de segurança CSRF.') !== false, "Output does not contain CSRF error");
+    }
+
     public function testApagarLogsVazio() {
         $conn = new MockConnection();
         $message = apagar_logs_selecionados($conn, []);
@@ -65,5 +99,56 @@ class AuditoriaLogsTest extends MiniTestCase {
         $this->assertEquals([1, 2], $delete_stmt->params);
         $this->assertTrue($delete_stmt->executed);
         $this->assertTrue($delete_stmt->closed);
+    }
+
+    public function testDeleteAllSuccess() {
+        $state = [
+            'session' => [
+                'user_id' => 1,
+                'user_level' => 'admin',
+                'csrf_token' => 'valid_token'
+            ],
+            'post' => [
+                'csrf_token' => 'valid_token',
+                'delete_all' => '1'
+            ]
+        ];
+        $output = shell_exec(PHP_BINARY . ' ' . __DIR__ . '/wrapper_auditoria_logs.php ' . escapeshellarg(json_encode($state)));
+        $this->assertTrue(strpos($output, 'Todos os logs foram apagados.') !== false, "Output does not contain success message");
+        $this->assertTrue(strpos($output, '[MOCK_AUDITORIA] Apagar Todos os Logs') !== false, "Output does not contain audit log");
+    }
+
+    public function testDeleteAllDatabaseError() {
+        $state = [
+            'session' => [
+                'user_id' => 1,
+                'user_level' => 'admin',
+                'csrf_token' => 'valid_token'
+            ],
+            'post' => [
+                'csrf_token' => 'valid_token',
+                'delete_all' => '1'
+            ],
+            'db_query_error' => 'Simulated DB query error'
+        ];
+        $output = shell_exec(PHP_BINARY . ' ' . __DIR__ . '/wrapper_auditoria_logs.php ' . escapeshellarg(json_encode($state)));
+        $this->assertTrue(strpos($output, 'Erro ao apagar todos os logs: Simulated DB query error') !== false, "Output does not contain error message");
+    }
+
+    public function testDeleteSelectedSuccess() {
+        $state = [
+            'session' => [
+                'user_id' => 1,
+                'user_level' => 'admin',
+                'csrf_token' => 'valid_token'
+            ],
+            'post' => [
+                'csrf_token' => 'valid_token',
+                'delete_selected' => '1',
+                'logs' => [1, 2, 3]
+            ]
+        ];
+        $output = shell_exec(PHP_BINARY . ' ' . __DIR__ . '/wrapper_auditoria_logs.php ' . escapeshellarg(json_encode($state)));
+        $this->assertTrue(strpos($output, 'Logs selecionados foram apagados.') !== false, "Output does not contain success message for selected logs");
     }
 }
