@@ -80,6 +80,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // Adicionar um endpoint para carregar os dados de liberação de forma assíncrona
+if (isset($_GET['action']) && $_GET['action'] == 'search_extintor') {
+    $search = isset($_GET['q']) ? $_GET['q'] : '';
+    $sql = "SELECT codigo, Predio, Atividade, Local_Exato FROM bd_extintores WHERE codigo LIKE ? LIMIT 20";
+    $stmt = $conn->prepare($sql);
+    $search_param = '%' . $search . '%';
+    $stmt->bind_param('s', $search_param);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $results = [];
+    while ($row = $result->fetch_assoc()) {
+        $results[] = [
+            'id' => $row['codigo'],
+            'text' => $row['codigo'] . ' - ' . $row['Predio'] . ' - ' . $row['Atividade'] . ' - ' . $row['Local_Exato']
+        ];
+    }
+    $stmt->close();
+    $conn->close();
+
+    header('Content-Type: application/json');
+    echo json_encode(['results' => $results]);
+    exit();
+}
+
 if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     $tipo = $_GET['tipo'];
     $liberado_para = $_GET['liberado_para'];
@@ -108,9 +132,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'fetch_data') {
     exit();
 }
 
-$sql_extintores = "SELECT codigo, Predio, Atividade, Local_Exato FROM bd_extintores";
-$result_extintores = $conn->query($sql_extintores);
-
 $sql_predios = "SELECT DISTINCT Predio FROM bd_extintores";
 $result_predios = $conn->query($sql_predios);
 
@@ -124,9 +145,11 @@ $conn->close();
     <title>Liberação de Manutenções</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link rel="manifest" href="../public/js/manifest.json">
 </head>
 <body>
@@ -203,13 +226,7 @@ $conn->close();
 
         <div id="extintor_container" class="form-group">
             <label for="codigo_extintor">Código do Extintor:</label>
-            <select id="codigo_extintor" name="codigo_extintor" class="form-control">
-                <?php while ($row = $result_extintores->fetch_assoc()) : ?>
-                    <option value="<?php echo htmlspecialchars($row['codigo']); ?>">
-                        <?php echo htmlspecialchars($row['codigo'] . " - " . $row['Predio'] . " - " . $row['Atividade'] . " - " . $row['Local_Exato']); ?>
-                    </option>
-                <?php endwhile; ?>
-            </select>
+            <select id="codigo_extintor" name="codigo_extintor" class="form-control" style="width: 100%;"></select>
         </div>
 
         <div id="predio_container" class="form-group" style="display: none;">
@@ -261,9 +278,31 @@ $conn->close();
     </div>
 </footer>
 	<script>
-    document.addEventListener('DOMContentLoaded', function() {
+    $(document).ready(function() {
         loadLiberados('inspecao', 'bombeiro');
         loadLiberados('manutencao', 'fornecedor');
+
+        $('#codigo_extintor').select2({
+            placeholder: 'Selecione um extintor...',
+            ajax: {
+                url: 'liberar_manutencao.php',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        action: 'search_extintor',
+                        q: params.term // search term
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1
+        });
     });
 
     function loadLiberados(tipo, liberado_para) {
