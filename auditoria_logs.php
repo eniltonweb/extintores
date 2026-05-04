@@ -1,4 +1,48 @@
 <?php
+
+if (!function_exists('apagar_logs_selecionados')) {
+    function apagar_logs_selecionados($conn, $logs_post) {
+        if (empty($logs_post) || !is_array($logs_post)) {
+            return "Nenhum log foi selecionado para exclusão.";
+        }
+
+        // Evitar excluir o log que registra a ação de apagar todos os logs
+        $sql_exclusao = "SELECT id FROM auditoria_logs WHERE detalhes = 'Todos os logs de auditoria foram apagados'";
+        $result_exclusao = $conn->query($sql_exclusao);
+
+        $id_exclusao = null;
+        if ($result_exclusao && $log_exclusao = $result_exclusao->fetch_assoc()) {
+            $id_exclusao = $log_exclusao['id'];
+        }
+
+        // Remover o ID do log de exclusão da lista de logs a serem excluídos
+        $logs_to_delete = $id_exclusao ? array_diff($logs_post, [$id_exclusao]) : $logs_post;
+
+        if (empty($logs_to_delete)) {
+            return "Nenhum log foi selecionado para exclusão.";
+        }
+
+        $logs_to_delete = array_map('intval', array_values($logs_to_delete));
+        $placeholders = implode(",", array_fill(0, count($logs_to_delete), "?"));
+        $sql = "DELETE FROM auditoria_logs WHERE id IN ($placeholders)";
+        $stmt = $conn->prepare($sql);
+
+        if (!$stmt) {
+            return "Erro ao preparar a exclusão.";
+        }
+
+        $types = str_repeat('i', count($logs_to_delete));
+        $bind_params = [];
+        foreach ($logs_to_delete as $key => $value) {
+            $bind_params[$key] = &$logs_to_delete[$key];
+        }
+        $stmt->bind_param($types, ...$bind_params);
+        $stmt->execute();
+        $stmt->close();
+
+        return "Logs selecionados foram apagados.";
+    }
+}
 session_start();
 require_once __DIR__ . '/config/db_conexao.php';
 // Gerar token CSRF
@@ -20,41 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         error_log("Tentativa de CSRF detectada em auditoria_logs.php. User ID: " . ($_SESSION['user_id'] ?? 'desconhecido'));
         $message = "Erro de validação de segurança CSRF.";
     } elseif (isset($_POST['delete_selected'])) {
-        if (!empty($_POST['logs'])) {
-            // Evitar excluir o log que registra a ação de apagar todos os logs
-            $sql_exclusao = "SELECT id FROM auditoria_logs WHERE detalhes = 'Todos os logs de auditoria foram apagados'";
-            $result_exclusao = $conn->query($sql_exclusao);
-            $log_exclusao = $result_exclusao->fetch_assoc();
-            $id_exclusao = $log_exclusao['id'];
-            
-            // Remover o ID do log de exclusão da lista de logs a serem excluídos
-            $logs_to_delete = array_diff($_POST['logs'], [$id_exclusao]);
-
-            if (!empty($logs_to_delete)) {
-                $logs_to_delete = array_map('intval', array_values($logs_to_delete));
-                $placeholders = implode(",", array_fill(0, count($logs_to_delete), "?"));
-                $sql = "DELETE FROM auditoria_logs WHERE id IN ($placeholders)";
-                $stmt = $conn->prepare($sql);
-
-                if ($stmt) {
-                    $types = str_repeat('i', count($logs_to_delete));
-                    $bind_params = [];
-                    foreach ($logs_to_delete as $key => $value) {
-                        $bind_params[$key] = &$logs_to_delete[$key];
-                    }
-                    $stmt->bind_param($types, ...$bind_params);
-                    $stmt->execute();
-                    $stmt->close();
-                    $message = "Logs selecionados foram apagados.";
-                } else {
-                    $message = "Erro ao preparar a exclusão.";
-                }
-            } else {
-                $message = "Nenhum log foi selecionado para exclusão.";
-            }
-        } else {
-            $message = "Nenhum log foi selecionado para exclusão.";
-        }
+        $message = apagar_logs_selecionados($conn, $_POST['logs'] ?? []);
     } elseif (isset($_POST['delete_all'])) {
         $sql = "DELETE FROM auditoria_logs";
         if ($conn->query($sql) === TRUE) {
