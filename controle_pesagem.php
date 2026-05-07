@@ -67,9 +67,7 @@ if (!isset($_SESSION['user_id'])){
               }
 
               if ($fp) {
-                foreach ($options as $opt) {
-                  fwrite($fp, $opt . "\n");
-                }
+                fwrite($fp, implode("\n", $options) . "\n");
                 fclose($fp);
                 // Atomic write for cache file
                 rename($tempFile, dirname($cacheFile) . '/' . basename($cacheFile));
