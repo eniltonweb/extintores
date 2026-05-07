@@ -10,12 +10,19 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'fornecedor') {
 
 // Consultar extintores liberados para manutenção de nível 2
 $sql_liberados_manutencao = "
-    SELECT DISTINCT be.Predio
+    SELECT be.Predio, be.codigo, be.Atividade, be.Local_Exato
     FROM liberacao_manutencao lm
     JOIN bd_extintores be ON lm.codigo_extintor = be.codigo
     WHERE lm.liberado_para = 'fornecedor'
 ";
 $result_liberados_manutencao = $conn->query($sql_liberados_manutencao);
+
+$extintores_por_predio = [];
+if ($result_liberados_manutencao) {
+    while ($row = $result_liberados_manutencao->fetch_assoc()) {
+        $extintores_por_predio[$row['Predio']][] = $row;
+    }
+}
 
 $codigo = filter_input(INPUT_GET, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
 $predio_selecionado = filter_input(INPUT_GET, 'predio', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -83,11 +90,14 @@ if ($codigo) {
             <label for="predio">Filtrar por Prédio:</label>
             <select id="predio" name="predio" onchange="this.form.submit()">
                 <option value="">Selecione o Prédio</option>
-                <?php while ($row = $result_liberados_manutencao->fetch_assoc()): ?>
-                    <option value="<?php echo htmlspecialchars($row['Predio']); ?>" <?php echo ($predio_selecionado == $row['Predio']) ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($row['Predio']); ?>
+                <?php
+                $predios_unicos = array_keys($extintores_por_predio);
+                foreach ($predios_unicos as $predio):
+                ?>
+                    <option value="<?php echo htmlspecialchars($predio); ?>" <?php echo ($predio_selecionado == $predio) ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($predio); ?>
                     </option>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </select>
         </form>
 
@@ -97,16 +107,12 @@ if ($codigo) {
                 <label for="codigo">Selecione o Extintor:</label>
                 <select id="codigo" name="codigo">
                     <?php
-                    $sql_extintores = "SELECT * FROM bd_extintores WHERE Predio = ?";
-                    $stmt_extintores = $conn->prepare($sql_extintores);
-                    $stmt_extintores->bind_param("s", $predio_selecionado);
-                    $stmt_extintores->execute();
-                    $result_extintores = $stmt_extintores->get_result();
-                    while ($row = $result_extintores->fetch_assoc()): ?>
+                    $extintores_do_predio = $extintores_por_predio[$predio_selecionado] ?? [];
+                    foreach ($extintores_do_predio as $row): ?>
                         <option value="<?php echo htmlspecialchars($row['codigo']); ?>">
                             <?php echo htmlspecialchars($row['codigo'] . " - " . $row['Atividade'] . " - " . $row['Local_Exato']); ?>
                         </option>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </select>
                 <button type="submit">Carregar Extintor</button>
             </form>
