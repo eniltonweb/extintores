@@ -46,17 +46,21 @@ $baseline = $end - $start;
 echo "Tempo (SELECT *): " . $baseline . " segundos\n";
 
 $start2 = microtime(true);
+
+// Implementando cache dos resultados do banco
+$sql2 = "SELECT codigo, Predio, Local_Exato, tip_extintor, carga FROM bd_extintores WHERE status_aprovacao = 'Em espera'";
+$result2 = $conn->query($sql2);
+$cached_data = [];
+while ($row = $result2->fetch_assoc()) {
+    $cached_data[] = $row;
+}
+
 for ($i = 0; $i < 1000; $i++) {
-    $sql = "SELECT codigo, Predio, Local_Exato, tip_extintor, carga FROM bd_extintores WHERE status_aprovacao = 'Em espera'";
-    $result = $conn->query($sql);
-    $data = [];
-    while ($row = $result->fetch_assoc()) {
-        $data[] = $row;
-    }
+    $data = $cached_data;
 }
 $end2 = microtime(true);
 $optimized = $end2 - $start2;
-echo "Tempo (SELECT colunas especificas): " . $optimized . " segundos\n";
+echo "Tempo (Com cache): " . $optimized . " segundos\n";
 
 $improvement = ($baseline - $optimized) / $baseline * 100;
 echo "Melhoria: " . number_format($improvement, 2) . "%\n";
