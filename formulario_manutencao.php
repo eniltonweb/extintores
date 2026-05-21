@@ -120,19 +120,51 @@ if ($codigo) {
     <?php endif; ?>
 
 <?php if ($show_form): ?>
-    <form method="POST" action="salvar_manutencao.php">
+    <form method="POST" action="salvar_manutencao.php" id="formManutencao">
         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
         <input type="hidden" name="codigo" value="<?php echo htmlspecialchars($codigo); ?>">
-        <div class="form-check">
+        
+        <div class="card mb-3 border-warning">
+            <div class="card-body">
+                <h5 class="card-title">Extintor Selecionado: <?php echo htmlspecialchars($codigo); ?></h5>
+                <p class="card-text text-muted">Local: <?php echo htmlspecialchars($row['Local_Exato']); ?></p>
+            </div>
+        </div>
+
+        <div class="form-check mb-3">
             <input type="checkbox" class="form-check-input" id="manutencao_n2" name="manutencao_n2" value="1">
-            <label class="form-check-label" for="manutencao_n2">Marcar Manutenção de Nível 2 Realizada</label>
+            <label class="form-check-label fw-bold" for="manutencao_n2">Confirmar Manutenção de Nível 2 Realizada</label>
         </div>
-        <div class="form-check">
+
+        <div class="form-group mb-3 p-3 bg-light border rounded" id="div_selo_inmetro" style="display: none;">
+            <label for="novo_selo_inmetro" class="text-danger fw-bold">Novo Número do Selo INMETRO *</label>
+            <input type="text" class="form-control border-danger" id="novo_selo_inmetro" name="novo_selo_inmetro" placeholder="Digite ou bipe o código alfanumérico do selo..." maxlength="50">
+            <small class="form-text text-muted">A captura do número de série é obrigatória para rastreabilidade de auditoria.</small>
+        </div>
+
+        <div class="form-check mb-4">
             <input type="checkbox" class="form-check-input" id="cobertura" name="cobertura" value="1">
-            <label class="form-check-label" for="cobertura">Marcar como Cobertura</label>
+            <label class="form-check-label" for="cobertura">Marcar como Cobertura (Substituto temporário)</label>
         </div>
-        <button type="submit">Salvar Manutenção</button>
+        
+        <button type="submit" class="btn btn-primary btn-lg w-100">Salvar Manutenção</button>
     </form>
+
+    <script>
+        document.getElementById('manutencao_n2').addEventListener('change', function() {
+            var divInmetro = document.getElementById('div_selo_inmetro');
+            var inputInmetro = document.getElementById('novo_selo_inmetro');
+            if(this.checked) {
+                divInmetro.style.display = 'block';
+                inputInmetro.required = true;
+                inputInmetro.focus();
+            } else {
+                divInmetro.style.display = 'none';
+                inputInmetro.required = false;
+                inputInmetro.value = '';
+            }
+        });
+    </script>
 <?php endif; ?>
 </div>
 <footer class="footer mt-4">

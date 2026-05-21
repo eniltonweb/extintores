@@ -17,6 +17,9 @@ if (!function_exists('salvar_manutencao_logic')) {
         $codigo = filter_var($post['codigo'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS);
         $cobertura = isset($post['cobertura']) && $post['cobertura'] == '1' ? 1 : 0;
         $manutencao_n2 = isset($post['manutencao_n2']) && $post['manutencao_n2'] == '1' ? 1 : 0;
+        
+        // NOVO: Captura do selo INMETRO
+        $novo_selo_inmetro = filter_var($post['novo_selo_inmetro'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS);
 
         // Garantir que o código não esteja vazio
         if (empty($codigo)) {
@@ -59,13 +62,18 @@ if (!function_exists('salvar_manutencao_logic')) {
 
         // Se o checkbox de manutenção de nível 2 foi marcado
         if ($manutencao_n2) {
+            // Validação rigorosa para Auditoria: Impedir fraude sem selo
+            if (empty(trim($novo_selo_inmetro))) {
+                return 'Location: formulario_manutencao.php?message=' . urlencode('Erro: O código do novo selo INMETRO é obrigatório para manutenções.');
+            }
+
             // Definir data de manutenção atual e próxima manutenção para um ano depois
             $data_manutencao_n2 = date('Y-m-d');
             $data_proxima_manutencao_n2 = date('Y-m-d', strtotime('+1 year'));
 
-            // Atualizar o extintor específico com as informações de manutenção e cobertura
+            // Atualizar o extintor específico com as informações de manutenção, cobertura e NOVO SELO
             $sql_update_manutencao = "UPDATE bd_extintores
-                           SET manutencao_n2 = ?, proxima_manutencao_n2 = ?, usuario_n2 = ?, cobertura = ?, updated_at = NOW()
+                           SET manutencao_n2 = ?, proxima_manutencao_n2 = ?, usuario_n2 = ?, cobertura = ?, selo_do_Inmetro = ?, updated_at = NOW()
                            WHERE codigo = ? LIMIT 1";
             $stmt_manutencao = $conn->prepare($sql_update_manutencao);
 
@@ -74,12 +82,22 @@ if (!function_exists('salvar_manutencao_logic')) {
                 error_log("Erro ao preparar consulta para atualizar manutenção: " . $conn->error);
                 $message .= " Erro interno ao atualizar a manutenção.";
             } else {
-                $stmt_manutencao->bind_param("sssis", $data_manutencao_n2, $data_proxima_manutencao_n2, $username, $cobertura, $codigo);
+                $stmt_manutencao->bind_param("sssiss", $data_manutencao_n2, $data_proxima_manutencao_n2, $username, $cobertura, $novo_selo_inmetro, $codigo);
 
                 // Executar e verificar se a consulta foi bem-sucedida
                 if ($stmt_manutencao->execute()) {
                     // Sucesso ao salvar
-                    $message .= " Manutenção e próxima manutenção registradas com sucesso!";
+                    $message .= " Manutenção, selo INMETRO e datas registadas com sucesso!";
+                    
+                    // Log de auditoria explícito sobre a troca do selo
+                    $log_acao = "Manutenção N2 Confirmada (Fornecedor)";
+                    $log_detalhe = "Manutenção concluída pelo fornecedor $username. Novo selo INMETRO aplicado: $novo_selo_inmetro.";
+                    $sql_log = "INSERT INTO auditoria_logs (user_id, user_level, action, detalhes) VALUES (?, 'fornecedor', ?, ?)";
+                    if ($stmt_log = $conn->prepare($sql_log)) {
+                        $stmt_log->bind_param("iss", $session['user_id'], $log_acao, $log_detalhe);
+                        $stmt_log->execute();
+                        $stmt_log->close();
+                    }
                 } else {
                     // Erro ao salvar
                     error_log("Erro ao atualizar a manutenção: " . $stmt_manutencao->error);

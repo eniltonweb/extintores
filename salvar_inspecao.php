@@ -4,7 +4,6 @@ session_start();
 require_once __DIR__ . '/config/db_conexao.php';
 include 'auditoria.php'; // Incluindo o arquivo que contém a função auditoria
 
-
 if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'bombeiro') {
     header('Location: index.php');
     exit();
@@ -39,8 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    $Local_Exato = filter_input(INPUT_POST, 'Local_Exato', FILTER_SANITIZE_SPECIAL_CHARS); // Novo campo
-    $selo_do_Inmetro = filter_input(INPUT_POST, 'selo_do_Inmetro', FILTER_SANITIZE_SPECIAL_CHARS);
+    $Local_Exato = filter_input(INPUT_POST, 'Local_Exato', FILTER_SANITIZE_SPECIAL_CHARS); 
+    // Captura do NOVO campo de validação visual (Não sobrescreve o código alfanumérico)
+    $status_selo_inmetro = filter_input(INPUT_POST, 'status_selo_inmetro', FILTER_SANITIZE_SPECIAL_CHARS);
+    
     $sinalizacao_vertical = filter_input(INPUT_POST, 'sinalizacao_vertical', FILTER_SANITIZE_SPECIAL_CHARS);
     $sinalizacao_piso = filter_input(INPUT_POST, 'sinalizacao_piso', FILTER_SANITIZE_SPECIAL_CHARS);
     $ficha_inspecao_trimestral = filter_input(INPUT_POST, 'ficha_inspecao_trimestral', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -49,6 +50,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $anel_identificacao = filter_input(INPUT_POST, 'anel_identificacao', FILTER_SANITIZE_SPECIAL_CHARS);
     $pesagem_co2_semestral = filter_input(INPUT_POST, 'pesagem_co2_semestral', FILTER_SANITIZE_SPECIAL_CHARS);
     $comentarios = filter_input(INPUT_POST, 'comentarios', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    
+    // Automação: Se o selo estiver divergente, força um aviso nos comentários para o Administrador ver na tabela
+    if ($status_selo_inmetro === 'NÃO OK') {
+        $comentarios = "[ALERTA GRAVE: Selo INMETRO Divergente/Ausente!] " . $comentarios;
+    }
+
     $foto = $_FILES['foto'];
 
     // Lidar com o upload de fotos
@@ -103,10 +110,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // Atualizar inspeção no banco de dados
+    // Atualizar inspeção no banco de dados (NOTA: selo_do_Inmetro foi removido para não apagar o número real)
     $sql = "UPDATE bd_extintores SET 
             Local_Exato = ?, 
-            selo_do_Inmetro = ?, 
             sinalizacao_vertical = ?, 
             sinalizacao_piso = ?, 
             ficha_inspecao_trimestral = ?, 
@@ -118,15 +124,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             foto = ?, 
             usuario = ?, 
             inspecao_trimestral_nivel1 = NOW()
-			WHERE codigo = ?";
+            WHERE codigo = ?";
 
     $stmt = $conn->prepare($sql);
 
-    $stmt->bind_param('sssssssssssss', $Local_Exato, $selo_do_Inmetro, $sinalizacao_vertical, $sinalizacao_piso, $ficha_inspecao_trimestral, $lacre, $pressao_manometro, $anel_identificacao, $pesagem_co2_semestral, $comentarios, $foto_nome, $_SESSION['username'], $codigo);
+    // Agora são 12 variáveis 's' (removido o selo original da query)
+    $stmt->bind_param('ssssssssssss', $Local_Exato, $sinalizacao_vertical, $sinalizacao_piso, $ficha_inspecao_trimestral, $lacre, $pressao_manometro, $anel_identificacao, $pesagem_co2_semestral, $comentarios, $foto_nome, $_SESSION['username'], $codigo);
 
     if ($stmt->execute()) {
-        auditoria('Inspeção de nível 1 realizada', $codigo, $_SESSION['user_id'], $_SESSION['user_level'], 'Inspeção realizada com sucesso.');
-        $success_msg = urlencode('Inspeção salva com sucesso.' . $upload_warning);
+        
+        // Regista explicitamente na tabela de Auditoria se a inspeção do selo falhou ou passou
+        $detalhe_auditoria = "Inspeção Nível 1 concluída. Status Visual do Selo INMETRO: $status_selo_inmetro.";
+        auditoria('Inspeção de nível 1 realizada', $codigo, $_SESSION['user_id'], $_SESSION['user_level'], $detalhe_auditoria);
+        
+        $success_msg = urlencode('Inspeção salva com sucesso. ' . $upload_warning);
 
         $stmt->close();
         $conn->close();
@@ -144,4 +155,3 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
-

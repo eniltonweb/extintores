@@ -148,11 +148,25 @@ if ($predio) {
             <label for="Local_Exato">Local Exato:</label>
             <input type="text" id="Local_Exato" name="Local_Exato" value="<?php echo htmlspecialchars($row['Local_Exato']); ?>" required><br>
 
-            <label for="selo_do_Inmetro">Selo do Inmetro:</label>
-            <select id="selo_do_Inmetro" name="selo_do_Inmetro">
-                <option value="OK">OK</option>
-                <option value="NÃO OK">NÃO OK</option>
-            </select><br>
+            <div class="card mb-3 border-info">
+    <div class="card-header bg-info text-white font-weight-bold">
+        Validação de Autenticidade (INMETRO)
+    </div>
+    <div class="card-body bg-light">
+        <p class="mb-2">Selo registado no sistema pela Manutenção:</p>
+        <h4 class="text-center font-weight-bold p-2 border border-secondary rounded bg-white text-primary">
+            <?php echo !empty($row['selo_do_Inmetro']) ? htmlspecialchars($row['selo_do_Inmetro']) : '<span class="text-danger">Sem selo registado</span>'; ?>
+        </h4>
+        <p class="text-muted small mt-2">O código alfanumérico físico colado no extintor é EXATAMENTE igual a este número?</p>
+        
+        <label for="status_selo_inmetro" class="font-weight-bold">Resultado da Verificação:</label>
+        <select id="status_selo_inmetro" name="status_selo_inmetro" class="form-control border-info" required>
+            <option value="">Selecione...</option>
+            <option value="OK">Sim, Confere Perfeitamente (OK)</option>
+            <option value="NÃO OK">Divergente / Não Confere / Danificado (NOK)</option>
+        </select>
+    </div>
+</div>
 
             <label for="sinalizacao_vertical">Sinalização Vertical:</label>
             <select id="sinalizacao_vertical" name="sinalizacao_vertical">
