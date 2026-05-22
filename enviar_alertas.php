@@ -80,5 +80,10 @@ $conn->close();
 </head>
 <body>
     <h2>Envio de Alertas por Email</h2>
+    <footer class="footer mt-4">
+    <div class="container text-center">
+        <p>&copy; <?= date('Y') ?> Sistema de Controle de Extintores</p>
+    </div>
+</footer>
 </body>
 </html>

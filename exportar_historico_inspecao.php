@@ -111,6 +111,11 @@ if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) 
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <footer class="footer mt-4">
+    <div class="container text-center">
+        <p>&copy; Sistema de Controle de Extintores</p>
+    </div>
+</footer>
 </body>
 </html>';
 

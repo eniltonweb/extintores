@@ -61,11 +61,11 @@ $conn->close();
         <p>Utilize o menu acima para navegar pelo sistema.</p>
         <p id="user-greeting"></p>
     </div>
-    <footer class="footer">
-        <div class="container text-center">
-            <p>&copy; 2024 Sistema de Controle de Extintores</p>
-        </div>
-    </footer>
+    <footer class="footer mt-4">
+    <div class="container text-center">
+        <p>&copy; <?= date('Y') ?> Sistema de Controle de Extintores</p>
+    </div>
+</footer>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             loadUserData();

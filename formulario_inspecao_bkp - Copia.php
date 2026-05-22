@@ -216,39 +216,7 @@ if ($predio) {
             <textarea id="comentarios" name="comentarios"><?php echo htmlspecialchars($row['comentarios']); ?></textarea><br>
 
             <label for="foto">Enviar Foto:</label>
-            <div class="card mb-3 border-warning mt-3">
-  <div class="card-header bg-warning text-dark font-weight-bold">
-    📷 Evidências Fotográficas
-  </div>
-  <div class="card-body">
-
-    <p class="text-muted mb-2">
-      Adicione até <strong>5 fotos</strong> como evidência.
-      Capture: extintor completo, lacre, manômetro, sinalização, anomalias.
-    </p>
-
-    <!-- Preview das fotos antes do envio -->
-    <div id="foto-preview-container" class="d-flex flex-wrap mb-2" style="gap:8px;"></div>
-
-    <label for="fotos" class="font-weight-bold">Selecionar Fotos:</label>
-    <input
-      type="file"
-      id="fotos"
-      name="fotos[]"
-      multiple
-      accept="image/jpeg,image/png,image/webp,image/gif"
-      class="form-control-file"
-      onchange="previewFotos(this)"
-    >
-    <small class="form-text text-muted">
-      Formatos aceitos: JPG, PNG, WEBP. Máximo 5MB por foto.
-    </small>
-
-    <!-- Legendas dinâmicas (geradas via JS conforme fotos são selecionadas) -->
-    <div id="legendas-container" class="mt-2"></div>
-
-  </div>
-</div><br>
+            <input type="file" id="foto" name="foto"><br>
 
             <button type="submit">Salvar Inspeção</button>
         </form>
@@ -257,66 +225,12 @@ if ($predio) {
 
 <footer class="footer mt-4">
     <div class="container text-center">
-        <p>&copy; <?= date('Y') ?> Sistema de Controle de Extintores</p>
+        <p>&copy; 2024 Sistema de Controle de Extintores</p>
     </div>
 </footer>
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-<script>
-function previewFotos(input) {
-  var previewContainer = document.getElementById('foto-preview-container');
-  var legendasContainer = document.getElementById('legendas-container');
-  previewContainer.innerHTML = '';
-  legendasContainer.innerHTML = '';
-
-  var files = input.files;
-  var maxFotos = 5;
-
-  if (files.length > maxFotos) {
-    alert('Máximo de ' + maxFotos + ' fotos permitido. Somente as primeiras ' + maxFotos + ' serão enviadas.');
-  }
-
-  for (var i = 0; i < Math.min(files.length, maxFotos); i++) {
-    (function(index, file) {
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        // Preview da imagem
-        var wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:relative;display:inline-block;';
-
-        var img = document.createElement('img');
-        img.src = e.target.result;
-        img.style.cssText = 'width:90px;height:70px;object-fit:cover;border:2px solid #dee2e6;border-radius:4px;';
-        img.title = file.name;
-
-        var badge = document.createElement('span');
-        badge.textContent = (index + 1);
-        badge.style.cssText = 'position:absolute;top:2px;left:2px;background:#007bff;color:#fff;' +
-          'font-size:11px;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;';
-
-        wrapper.appendChild(img);
-        wrapper.appendChild(badge);
-        previewContainer.appendChild(wrapper);
-
-        // Campo de legenda
-        var legendaDiv = document.createElement('div');
-        legendaDiv.className = 'input-group input-group-sm mb-1';
-        legendaDiv.innerHTML =
-          '<div class="input-group-prepend">' +
-            '<span class="input-group-text">Foto ' + (index+1) + '</span>' +
-          '</div>' +
-          '<input type="text" class="form-control" ' +
-            'name="legendas[]" ' +
-            'placeholder="Ex: Lacre violado, manômetro abaixo do normal..." ' +
-            'maxlength="255">';
-        legendasContainer.appendChild(legendaDiv);
-      };
-      reader.readAsDataURL(file);
-    })(i, files[i]);
-  }
-}
-</script>
 </body>
 </html>
 <?php

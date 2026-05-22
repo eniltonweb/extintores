@@ -83,6 +83,11 @@ while ($row = $result->fetch_assoc()) {
 echo '        </tbody>
         </table>
     </div>
+    <footer class="footer mt-4">
+    <div class="container text-center">
+        <p>&copy;Sistema de Controle de Extintores</p>
+    </div>
+</footer>
 </body>
 </html>';
 

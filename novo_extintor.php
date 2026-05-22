@@ -95,7 +95,7 @@ $result_predios = $conn->query($sql_predios);
 
 <footer class="footer mt-4">
     <div class="container text-center">
-        <p>&copy; 2024 Sistema de Controle de Extintores</p>
+        <p>&copy; <?= date('Y') ?> Sistema de Controle de Extintores</p>
     </div>
 </footer>
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

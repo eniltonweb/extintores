@@ -89,6 +89,11 @@ $result_extintores = $conn->query($sql_extintores);
         </tbody>
     </table>
 </div>
+<footer class="footer mt-4">
+    <div class="container text-center">
+        <p>&copy; <?= date('Y') ?> Sistema de Controle de Extintores</p>
+    </div>
+</footer>
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>

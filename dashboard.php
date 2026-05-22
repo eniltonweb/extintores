@@ -167,9 +167,9 @@ if (isset($conn) && $conn instanceof mysqli) {
     </div>
 </div>
 
-<footer class="footer">
-    <div class="container">
-        <p>&copy; 2024 Sistema de Controle de Extintores</p>
+<footer class="footer mt-4">
+    <div class="container text-center">
+        <p>&copy; <?= date('Y') ?> Sistema de Controle de Extintores</p>
     </div>
 </footer>
 

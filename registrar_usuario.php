@@ -200,7 +200,7 @@ $conn->close();
 
 <footer class="footer mt-4">
     <div class="container text-center">
-        <p>&copy; 2024 Sistema de Controle de Extintores</p>
+        <p>&copy; <?= date('Y') ?> Sistema de Controle de Extintores</p>
     </div>
 </footer>
 <script>

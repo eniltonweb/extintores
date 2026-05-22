@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: eniltonbd.mysql.dbaas.com.br
--- Generation Time: 21-Maio-2026 às 12:41
+-- Generation Time: 21-Maio-2026 às 21:11
 -- Versão do servidor: 5.7.32-35-log
 -- PHP Version: 5.6.40-0+deb8u12
 
@@ -97,7 +97,7 @@ CREATE TABLE `bd_extintores` (
   `pesagem_co2_semestral` varchar(7) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0',
   `usuario` varchar(50) CHARACTER SET latin1 COLLATE latin1_general_ci DEFAULT NULL,
   `comentarios` text CHARACTER SET latin1 COLLATE latin1_general_ci,
-  `foto` varchar(255) CHARACTER SET latin1 COLLATE latin1_general_ci DEFAULT NULL,
+  `foto` varchar(255) CHARACTER SET latin1 COLLATE latin1_general_ci DEFAULT NULL COMMENT 'DEPRECATED: use tabela inspecao_fotos. Mantido para retrocompatibilidade.',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `cobertura` tinyint(1) DEFAULT '0',
@@ -2147,6 +2147,32 @@ CREATE TABLE `historico_manutencao` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura da tabela `inspecao_fotos`
+--
+
+CREATE TABLE `inspecao_fotos` (
+  `id` int(11) NOT NULL,
+  `extintor_codigo` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'FK para bd_extintores.codigo',
+  `data_inspecao` date NOT NULL COMMENT 'Data em que a inspeção foi realizada',
+  `foto_nome` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome do arquivo em /uploads/',
+  `legenda` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Descrição opcional da evidência',
+  `usuario` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Bombeiro que fez o upload',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Fotos/evidências das inspeções de Nível 1';
+
+--
+-- Extraindo dados da tabela `inspecao_fotos`
+--
+
+INSERT INTO `inspecao_fotos` (`id`, `extintor_codigo`, `data_inspecao`, `foto_nome`, `legenda`, `usuario`, `created_at`) VALUES
+(1, '100-06', '2025-05-30', 'Generated Image May 21, 2025 - 11_32AM.jpeg', 'Foto migrada do sistema anterior', 'Perim', '2026-05-22 00:05:25'),
+(2, '470-01', '2026-05-19', 'inspecao_470-01_1779206680.jpg', 'Foto migrada do sistema anterior', 'Fernando', '2026-05-22 00:05:25'),
+(3, '470-08', '2026-05-07', '17781621462428258807174915055567.jpg', 'Foto migrada do sistema anterior', 'Bombeiro', '2026-05-22 00:05:25'),
+(4, '610-09', '2026-04-07', 'LogoUrsoFire_Email.png', 'Foto migrada do sistema anterior', 'Perim', '2026-05-22 00:05:25');
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura da tabela `liberacao_inspecao`
 --
 
@@ -2350,6 +2376,15 @@ ALTER TABLE `historico_manutencao`
   ADD KEY `usuario_id` (`usuario_id`);
 
 --
+-- Indexes for table `inspecao_fotos`
+--
+ALTER TABLE `inspecao_fotos`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_extintor_codigo` (`extintor_codigo`),
+  ADD KEY `idx_data_inspecao` (`data_inspecao`),
+  ADD KEY `idx_codigo_data` (`extintor_codigo`,`data_inspecao`);
+
+--
 -- Indexes for table `liberacao_inspecao`
 --
 ALTER TABLE `liberacao_inspecao`
@@ -2430,6 +2465,12 @@ ALTER TABLE `historico_inspecao`
 --
 ALTER TABLE `historico_manutencao`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `inspecao_fotos`
+--
+ALTER TABLE `inspecao_fotos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `liberacao_inspecao`

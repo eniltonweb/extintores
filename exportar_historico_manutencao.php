@@ -112,6 +112,11 @@ if ($result->num_rows > 0) {
             <p>Não foram encontrados registros de manutenção para exportação de acordo com os critérios selecionados.</p>
             <a href='historico_manutencao.php'>Voltar para Histórico de Manutenções</a>
         </div>
+        <footer class="footer mt-4">
+    <div class="container text-center">
+        <p>&copy; Sistema de Controle de Extintores</p>
+    </div>
+</footer>
     </body>
     </html>
     ";

@@ -144,11 +144,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <button type="submit" name="remover">Remover Extintor</button>
         </form>
     </div>
-    <footer class="footer mt-4">
-        <div class="container text-center">
-            <p>&copy; 2024 Sistema de Controle de Extintores</p>
-        </div>
-    </footer>
+<footer class="footer mt-4">
+    <div class="container text-center">
+        <p>&copy; <?= date('Y') ?> Sistema de Controle de Extintores</p>
+    </div>
+</footer>
 </body>
 </html>
 <?php
