@@ -1,5 +1,8 @@
-<nav class="navbar navbar-expand-lg navbar-dark">
-        <a class="navbar-brand" href="index.php">Controle de Extintores</a>
+<nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <a class="navbar-brand" href="index.php">
+            <img src="img/michelin_logo.png" height="30" class="d-inline-block align-top mr-2" style="filter: brightness(0) invert(1);" alt="Logo">
+            Controle de Extintores
+        </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
