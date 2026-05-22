@@ -2,13 +2,19 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Carrega o autoloader do Composer.
-// O diretório `vendor` é criado após a instalação do PHPMailer.
 require 'vendor/autoload.php';
 require_once __DIR__ . '/config/db_conexao.php';
 session_start();
 
-if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
+// Define uma senha secreta para o Cron Job
+$cron_token_secreto = 'michelin_extintores_2026_secreto';
+
+// Verifica se é um admin logado OU se a URL tem o token secreto correto
+$is_admin = (isset($_SESSION['user_id']) && $_SESSION['user_level'] == 'admin');
+$is_cron  = (isset($_GET['token']) && $_GET['token'] === $cron_token_secreto);
+
+if (!$is_admin && !$is_cron) {
+    // Se não for nenhum dos dois, bloqueia o acesso
     header('Location: index.php');
     exit();
 }
@@ -41,7 +47,6 @@ if ($result->num_rows > 0) {
         $mensagens = [];
         $codigos = [];
 
-        $alertas = [];
         while ($row = $result->fetch_assoc()) {
             $mensagens[] = "O extintor com código {$row['codigo']} está com manutenção pendente. Próxima manutenção: {$row['proxima_manutencao_n2']}";
             $codigos[] = $row['codigo'];
@@ -50,13 +55,13 @@ if ($result->num_rows > 0) {
         if (!empty($mensagens)) {
             try {
                 $mail->addAddress($mailRecipient);
-                $mail->Subject = 'Alerta de Manutenção Pendente';
+                $mail->Subject = 'Alerta de Manutenção Pendente - Extintores';
                 $mail->Body = implode('<br><br>', $mensagens);
 
                 $mail->send();
 
                 foreach ($codigos as $codigo) {
-                    echo 'Mensagem enviada para ' . $codigo . '<br>';
+                    echo 'Alerta enviado sobre o extintor ' . $codigo . '<br>';
                 }
             } catch (Exception $e) {
                 echo "A mensagem não pôde ser enviada. Erro: {$mail->ErrorInfo}";
@@ -66,24 +71,30 @@ if ($result->num_rows > 0) {
         echo "Erro ao configurar o envio de emails: {$mail->ErrorInfo}";
     }
 } else {
-    echo "Nenhum extintor com manutenção pendente.";
+    echo "Nenhum extintor com manutenção pendente. Tudo certo!";
 }
 
 $conn->close();
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
+    <meta charset="UTF-8">
     <title>Envio de Alertas</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .success { color: green; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <h2>Envio de Alertas por Email</h2>
+    <h2>Processamento de Alertas por E-mail Concluído</h2>
+    <p>Verifique as mensagens acima para confirmar o envio.</p>
     <footer class="footer mt-4">
-    <div class="container text-center">
-        <p>&copy; <?= date('Y') ?> Sistema de Controle de Extintores</p>
-    </div>
-</footer>
+        <div class="container text-center">
+            <p>&copy; <?= date('Y') ?> Sistema de Controle de Extintores</p>
+        </div>
+    </footer>
 </body>
 </html>

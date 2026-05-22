@@ -21,9 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $novo_local = filter_input(INPUT_POST, 'novo_local', FILTER_SANITIZE_SPECIAL_CHARS);
     $novo_tipo = filter_input(INPUT_POST, 'novo_tipo', FILTER_SANITIZE_SPECIAL_CHARS);
     $novo_carga = filter_input(INPUT_POST, 'novo_carga', FILTER_SANITIZE_SPECIAL_CHARS);
+    
+    // CAPTURAR O NOVO CAMPO
+    $novo_selo_inmetro = filter_input(INPUT_POST, 'novo_selo_inmetro', FILTER_SANITIZE_SPECIAL_CHARS);
 
-    // Verificar se todos os campos obrigatórios foram preenchidos
-    if ($novo_predio && $novo_codigo && $novo_local && $novo_tipo && $novo_carga) {
+    // Verificar se todos os campos obrigatórios foram preenchidos (incluindo o selo)
+    if ($novo_predio && $novo_codigo && $novo_local && $novo_tipo && $novo_carga && $novo_selo_inmetro) {
         
         // Verificar se o código do extintor já existe
         $sql_verificar_codigo = "SELECT 1 FROM bd_extintores WHERE codigo = ?";
@@ -33,7 +36,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $result_verificar_codigo = $stmt_verificar_codigo->get_result();
 
         if ($result_verificar_codigo->num_rows > 0) {
-            // Caso o código já exista, redirecionar com mensagem de erro
             header('Location: formulario_inspecao.php?message=Erro:+O+código+do+extintor+já+existe.');
             exit();
         }
@@ -49,36 +51,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $row_atividade = $result_atividade->fetch_assoc();
             $atividade = $row_atividade['Atividade'];
         } else {
-            // Caso não exista atividade registrada, usar um valor padrão (neste exemplo, estamos iniciando com '1')
             $atividade = '1';
         }
 
-        // Inserir o novo extintor na base de dados
+        // Inserir o novo extintor na base de dados com o selo INMETRO
         $sql_inserir_extintor = "
-            INSERT INTO bd_extintores (codigo, Predio, Local_Exato, tip_extintor, carga, Atividade, status_aprovacao) 
-            VALUES (?, ?, ?, ?, ?, ?, 'Em espera')
+            INSERT INTO bd_extintores (codigo, Predio, Local_Exato, tip_extintor, carga, Atividade, status_aprovacao, selo_do_Inmetro) 
+            VALUES (?, ?, ?, ?, ?, ?, 'Em espera', ?)
         ";
         $stmt_inserir_extintor = $conn->prepare($sql_inserir_extintor);
-        $stmt_inserir_extintor->bind_param("ssssss", $novo_codigo, $novo_predio, $novo_local, $novo_tipo, $novo_carga, $atividade);
+        
+        // Agora são 7 strings ("sssssss") no bind_param
+        $stmt_inserir_extintor->bind_param("sssssss", $novo_codigo, $novo_predio, $novo_local, $novo_tipo, $novo_carga, $atividade, $novo_selo_inmetro);
 
         if ($stmt_inserir_extintor->execute()) {
-            // Inserção bem-sucedida - registrar na auditoria e redirecionar com mensagem de sucesso
-            auditoria('Novo extintor adicionado', $novo_codigo, $_SESSION['user_id'], $_SESSION['user_level'], "Prédio: $novo_predio, Local: $novo_local");
+            // Inserção bem-sucedida - registrar na auditoria com o selo e redirecionar
+            auditoria('Novo extintor adicionado', $novo_codigo, $_SESSION['user_id'], $_SESSION['user_level'], "Prédio: $novo_predio, Local: $novo_local, Selo INMETRO: $novo_selo_inmetro");
             header('Location: formulario_inspecao.php?message=Novo+extintor+adicionado+com+sucesso+e+aguardando+aprovação.');
             exit();
         } else {
-            // Inserção falhou - redirecionar com mensagem de erro
+            // Inserção falhou
             header('Location: formulario_inspecao.php?message=Erro:+Não+foi+possível+adicionar+o+novo+extintor.&erro=' . $stmt_inserir_extintor->error);
             exit();
         }
     } else {
-        // Campos obrigatórios não preenchidos - redirecionar com mensagem de erro
         header('Location: formulario_inspecao.php?message=Erro:+Por+favor,+preencha+todos+os+campos+obrigatórios.');
         exit();
     }
 }
 
-// Caso o método de requisição não seja POST, redirecionar para a página inicial
 header('Location: index.php');
 exit();
 ?>

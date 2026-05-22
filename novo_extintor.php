@@ -17,40 +17,20 @@ $result_predios = $conn->query($sql_predios);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Formulário Inspeção de Nivel 1</title>
+    <title>Adicionar Novo Extintor</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header>
-<nav class="navbar navbar-expand-lg navbar-dark">
-    <a class="navbar-brand" href="index.php">Controle de Extintores</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
-            <li class="nav-item">
-                <a class="nav-link" href="index.php">Inicio</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="formulario_inspecao.php">Inspeção de Nível 1</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="novo_extintor.php">Adicionar Novo Extintor</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="sair.php">Sair</a>
-            </li>
-        </ul>
-    </div>
-</nav>
+<?php include 'templates/header_controller.php'; ?>
 </header>
 
 <div class="container mt-4">
     <h2>Adicionar Novo Extintor</h2>
     <form method="POST" action="salvar_novo_extintor.php" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
+        
         <label for="novo_predio">Prédio:</label>
         <select id="novo_predio" name="novo_predio" required onchange="gerarCodigoNovoExtintor()">
             <option value="">Selecione um Prédio</option>
@@ -88,6 +68,9 @@ $result_predios = $conn->query($sql_predios);
             <option value="10L">10L</option>
             <option value="75L">75L</option>
         </select><br>
+
+        <label for="novo_selo_inmetro">Selo INMETRO (Fábrica):</label>
+        <input type="text" id="novo_selo_inmetro" name="novo_selo_inmetro" placeholder="Ex: AB123456" required><br>
 
         <button type="submit">Adicionar Extintor</button>
     </form>

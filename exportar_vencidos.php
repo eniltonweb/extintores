@@ -34,8 +34,8 @@ $html = '<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Extintores Vencidos</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    
+    
 
     <style>
         body.export-page { background-color: #ffffff; font-family: Inter, sans-serif; }
@@ -103,8 +103,8 @@ $html .= '</tbody>
             </table>
         </div>
     </div>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    
     <footer class="footer mt-4">
     <div class="container text-center">
         <p>&copy; Sistema de Controle de Extintores</p>
