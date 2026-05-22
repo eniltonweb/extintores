@@ -17,8 +17,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] != 'admin') {
 $dias = filter_input(INPUT_GET, 'dias', FILTER_SANITIZE_NUMBER_INT) ?: 30;
 
 // Definir os cabeçalhos para exportar o arquivo HTML
-header('Content-Type: text/html; charset=utf-8');
-header('Content-Disposition: attachment; filename=Extintores_vencidos_' . $dias . '.html');
+require_once __DIR__ . '/vendor/autoload.php';
+$filename = 'Extintores_vencidos_' . $dias . '.pdf';
 
 // Construir a consulta SQL para obter os extintores vencidos
 $sql = "SELECT * FROM bd_extintores WHERE dias_para_expirar_n2 <= ?";
@@ -36,11 +36,26 @@ $html = '<!DOCTYPE html>
     <title>Relatório de Extintores Vencidos</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+
+    <style>
+        body.export-page { background-color: #ffffff; font-family: Inter, sans-serif; }
+        .export-page .header-img { max-width: 120px !important; margin-bottom: 1rem; }
+        .export-page h2 { color: #27509b; font-weight: 700; margin-bottom: 1.5rem; }
+        .export-page table { font-size: 12px; width: 100%; border-collapse: collapse; }
+        .export-page th { background-color: #27509b !important; color: #ffffff !important; padding: 10px; }
+        .export-page td { padding: 8px; border: 1px solid #cbd5e0; }
+        .export-page tbody tr:nth-child(even) { background-color: #f8fafc !important; }
+        /* Garantir impressão de cores de fundo (WebKit) */
+        @media print {
+            .export-page th { background-color: #27509b !important; -webkit-print-color-adjust: exact; color: #ffffff !important; }
+            .export-page tbody tr:nth-child(even) { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; }
+        }
+    </style>
 </head>
 <body class="export-page">
     <div class="container mt-5">
         <div class="text-center mb-4">
-            <img src="http://www.enilton.com.br/img/michelin_logo2.png" alt="Michelin Logo" class="header-img">
+            <img src="http://www.enilton.com.br/img/michelin_logo2.png" alt="Michelin Logo" class="header-img" style="max-width: 150px; margin-bottom: 15px;">
             <h2 class="text-center">Relatório de Extintores Vencidos</h2>
         </div>
         <div class="table-responsive">
@@ -99,7 +114,11 @@ $html .= '</tbody>
 </html>';
 
 // Exibir o HTML gerado
-echo $html;
+    // Gerar PDF com mPDF (Landscape)
+    $mpdf = new \Mpdf\Mpdf(['orientation' => 'L', 'format' => 'A4', 'tempDir' => sys_get_temp_dir() . '/mpdf']);
+    $mpdf->setBasePath(__DIR__);
+    $mpdf->WriteHTML($html);
+    $mpdf->Output($filename, \Mpdf\Output\Destination::DOWNLOAD);
 
 // Registrar a ação no log de auditoria
 $user_id = $_SESSION['user_id'];

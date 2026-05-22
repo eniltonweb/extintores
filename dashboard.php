@@ -1,8 +1,8 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] !== 'admin') {
+    header('Location: index.php');
     exit();
 }
 
@@ -104,65 +104,36 @@ if (isset($conn) && $conn instanceof mysqli) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark">
-        <a class="navbar-brand" href="index.php">Controle de Extintores</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="index.php">Inicio</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="liberar_manutencao.php">Liberar Extintores</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="historico_inspecao.php">Historico Inspeções</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="historico_manutencao.php">Histórico Manutenções</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="filtro_vencimento.php">Vencimento Extintores</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="registrar_usuario.php">Gerenciar Usuários</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="auditoria_logs.php">Log Auditoria</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="dashboard.php">Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="exportar_dados.php">Exportar</a>
-                </li>
-            </ul>
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="sair.php">Sair</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
+<?php include 'templates/header_controller.php'; ?>
 
-<div class="container">
-    <h2 class="text-center">GRÁFICO DAS MANUTENÇÕES</h2>
+<div class="container fade-in">
+    <div class="card border-0 mb-4 text-center" style="background: transparent; box-shadow: none;">
+        <h2 style="color: var(--michelin-blue-dark); text-transform: uppercase; letter-spacing: 1px;">Visão Geral do Sistema</h2>
+        <p class="text-muted">Acompanhe as métricas de manutenções e a distribuição dos extintores.</p>
+    </div>
+    
     <div class="row">
-        <div class="col-md-6 chart-container">
-            <h3>Manutenções Realizadas</h3>
-            <canvas id="manutencaoChart"></canvas>
+        <div class="col-md-6 mb-4">
+            <div class="chart-container h-100">
+                <h4 class="text-center mb-4" style="color: var(--michelin-blue);">Manutenções Realizadas</h4>
+                <canvas id="manutencaoChart"></canvas>
+            </div>
         </div>
-        <div class="col-md-6 chart-container">
-            <h3>Próximas Manutenções</h3>
-            <canvas id="proximasChart"></canvas>
+        <div class="col-md-6 mb-4">
+            <div class="chart-container h-100">
+                <h4 class="text-center mb-4" style="color: var(--michelin-blue);">Próximas Manutenções</h4>
+                <canvas id="proximasChart"></canvas>
+            </div>
         </div>
     </div>
     <div class="row">
-        <div class="col-md-12 chart-container">
-            <h3>Distribuição dos Tipos de Extintores</h3>
-            <canvas id="extintoresChart"></canvas>
+        <div class="col-md-12 mb-4">
+            <div class="chart-container">
+                <h4 class="text-center mb-4" style="color: var(--michelin-blue-dark);">Distribuição dos Tipos de Extintores</h4>
+                <div style="max-height: 400px; display: flex; justify-content: center;">
+                    <canvas id="extintoresChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 </div>

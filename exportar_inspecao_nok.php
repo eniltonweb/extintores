@@ -12,8 +12,8 @@ if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) 
         exit();
     }
 
-    header('Content-Type: text/html; charset=utf-8');
-    header('Content-Disposition: attachment; filename=historico_inspecao_naok_' . date('Y-m-d_H:i:s') . '.html');
+    require_once __DIR__ . '/vendor/autoload.php';
+    $filename = 'historico_inspecao_naok_' . date('Y-m-d_H:i:s') . '.pdf';
 
     // Construir consulta SQL
     $sql = "
@@ -59,11 +59,26 @@ if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) 
         <title>Relatório de Inspeções com Não Conformidade</title>
         <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="styles.css">
-    </head>
+    
+    <style>
+        body.export-page { background-color: #ffffff; font-family: Inter, sans-serif; }
+        .export-page .header-img { max-width: 120px !important; margin-bottom: 1rem; }
+        .export-page h2 { color: #27509b; font-weight: 700; margin-bottom: 1.5rem; }
+        .export-page table { font-size: 12px; width: 100%; border-collapse: collapse; }
+        .export-page th { background-color: #27509b !important; color: #ffffff !important; padding: 10px; }
+        .export-page td { padding: 8px; border: 1px solid #cbd5e0; }
+        .export-page tbody tr:nth-child(even) { background-color: #f8fafc !important; }
+        /* Garantir impressão de cores de fundo (WebKit) */
+        @media print {
+            .export-page th { background-color: #27509b !important; -webkit-print-color-adjust: exact; color: #ffffff !important; }
+            .export-page tbody tr:nth-child(even) { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
     <body class="export-page">
         <div class="container mt-5">
             <div class="text-center mb-4">
-                <img src="http://www.enilton.com.br/img/michelin_logo2.png" alt="Michelin Logo" class="header-img">
+                <img src="http://www.enilton.com.br/img/michelin_logo2.png" alt="Michelin Logo" class="header-img" style="max-width: 150px; margin-bottom: 15px;">
                 <h2 class="text-center">Relatório de Inspeções com Não Conformidade</h2>
             </div>
             <div class="table-responsive">
@@ -126,7 +141,11 @@ if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) 
     </body>
     </html>';
 
-    echo $html;
+        // Gerar PDF com mPDF (Landscape)
+    $mpdf = new \Mpdf\Mpdf(['orientation' => 'L', 'format' => 'A4', 'tempDir' => sys_get_temp_dir() . '/mpdf']);
+    $mpdf->setBasePath(__DIR__);
+    $mpdf->WriteHTML($html);
+    $mpdf->Output($filename, \Mpdf\Output\Destination::DOWNLOAD);
     // Registrar a auditoria
     $user_id = $_SESSION['user_id'];
     $action = 'Exportação de inspeções não conforme';

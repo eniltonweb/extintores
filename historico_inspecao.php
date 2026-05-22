@@ -198,7 +198,47 @@ $conn->close();
         <button type="submit" class="btn btn-danger mb-4">Limpar Histórico</button>
     </form>
     <a href="exportar_historico_inspecao.php" class="btn btn-success mb-4">Exportar Histórico de Inspeção</a>
-	<a href="exportar_inspecao_nok.php" class="btn btn-success mb-4">Exportar Histórico de Inspeção Não Conforme</a>
+    <a href="exportar_inspecao_nok.php" class="btn btn-success mb-4">Exportar Histórico de Inspeção Não Conforme</a>
+    
+    <button class="btn btn-primary mb-4" type="button" data-toggle="collapse" data-target="#painelPDF" aria-expanded="false" aria-controls="painelPDF">
+        Gerar Relatório PDF Avançado
+    </button>
+
+    <div class="collapse mb-4" id="painelPDF">
+        <div class="card card-body border-primary">
+            <h5 class="card-title text-primary">Filtros do Relatório em PDF</h5>
+            <form action="exportar_relatorio_pdf.php" method="GET" target="_blank">
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label for="pdf_predio">Prédio (Opcional):</label>
+                        <input type="text" name="predio" id="pdf_predio" class="form-control" placeholder="Ex: 470">
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        <label for="pdf_de">Data Inicial:</label>
+                        <input type="date" name="de" id="pdf_de" class="form-control" value="<?= date('Y-m-01') ?>">
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        <label for="pdf_ate">Data Final:</label>
+                        <input type="date" name="ate" id="pdf_ate" class="form-control" value="<?= date('Y-m-d') ?>">
+                    </div>
+
+                    <div class="form-group col-md-3 d-flex align-items-end">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="apenas_nok" id="pdf_apenas_nok" value="1">
+                            <label class="form-check-label text-danger font-weight-bold" for="pdf_apenas_nok">
+                                Apenas Não Conformes
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Gerar PDF</button>
+            </form>
+        </div>
+    </div>
+
+    <table class="table table-bordered">
 
 
     <table class="table table-bordered">

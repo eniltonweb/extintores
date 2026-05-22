@@ -100,43 +100,85 @@ if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) 
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--michelin-blue-dark), var(--michelin-blue));
             margin: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        /* Efeito de fundo abstrato */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(252, 229, 0, 0.15) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+            border-radius: 50%;
+            z-index: 0;
         }
         .login-container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            padding: 40px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
+            z-index: 1;
+            text-align: center;
         }
         .login-container .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .login-container label {
+            font-weight: 600;
+            color: var(--michelin-blue-dark);
+            margin-bottom: 8px;
         }
         .login-container .btn-primary {
-            background-color: #27509b;
-            border: none;
+            margin-top: 10px;
+            padding: 12px;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .login-container .btn-primary:hover {
-            background-color: #fce500;
-            color: #000;
+        .login-container h2 {
+            font-size: 1.5rem;
+            margin-top: 15px;
+            margin-bottom: 25px;
         }
         .login-container p.error {
-            color: red;
-            margin-top: 10px;
+            color: #e53e3e;
+            background-color: #fff5f5;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #fc8181;
+            margin-top: 15px;
+            font-weight: 500;
         }
         .login-container img {
-            max-width: 360px;
-            margin-bottom: 0px;
+            max-width: 200px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.1));
+        }
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: rgba(255,255,255,0.7) !important;
         }
     </style>
 </head>
 <body>
-    <div class="login-container text-center">
-        <img src="img/michelin_logo.png" alt="Logo">
-        <h2 class="text-center">ENTRAR NO SISTEMA</h2>
+    <div class="login-container fade-in">
+        <img src="img/michelin_logo.png" alt="Logo Michelin">
+        <h2>Acesso ao Sistema</h2>
         <form method="POST" action="login.php">
 			<input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
             <div class="form-group">

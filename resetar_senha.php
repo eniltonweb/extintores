@@ -52,7 +52,7 @@ if (isset($_GET['id'])) {
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
-<?php include '../templates/header1.php'; ?>
+<?php include 'templates/header_controller.php'; ?>
     <div class="container mt-4">
         <h2 class="text-center">Resetar Senha</h2>
 

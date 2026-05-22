@@ -1,162 +1,292 @@
- body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #ffffff;
-            color: #1b1e21;
-        }
-        .navbar {
-            background: linear-gradient(45deg, #001f3f, #27509b);
-            border-bottom: 3px solid #fce500;
-        }
-        .navbar-brand {
-            font-size: 1.5rem;
-            color: #fce500 !important;
-        }
-        .nav-link {
-            color: #ffffff !important;
-            transition: color 0.3s ease-in-out, transform 0.3s ease-in-out;
-        }
-        .nav-link:hover {
-            color: #fce500 !important;
-            transform: scale(1.1);
-        }
-        .navbar-toggler {
-            border-color: #fce500;
-        }
-        .navbar-toggler-icon {
-            background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%25255, 229, 0, 0.7%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
-        }
-        .dropdown-menu {
-            background-color: #27509b;
-            border: none;
-        }
-        .dropdown-item {
-            color: #ffffff;
-            transition: background-color 0.3s ease-in-out;
-        }
-        .dropdown-item:hover {
-            background-color: #fce500;
-            color: #000000;
-        }
-        .nav-item {
-            margin-right: 10px;
-        }
-        .navbar-nav.ml-auto {
-            margin-left: auto;
-        }
-        .navbar-collapse {
-            flex-grow: 1;
-            justify-content: space-between;
-        }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
-        /* Estilos para páginas de exportação */
-        .export-page {
-            background-color: #f8f9fa;
-            color: #000;
-        }
+:root {
+    --michelin-blue: #27509b;
+    --michelin-blue-dark: #1a3668;
+    --michelin-yellow: #fce500;
+    --michelin-yellow-hover: #d1be00;
+    --bg-color: #f0f4f8;
+    --text-main: #2d3748;
+    --text-muted: #718096;
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 10px 15px -3px rgba(39, 80, 155, 0.1);
+    --shadow-lg: 0 20px 25px -5px rgba(39, 80, 155, 0.15);
+    --radius-md: 12px;
+    --radius-lg: 20px;
+}
 
-        .export-page.no-data {
-            background-color: #f0f0f0;
-            text-align: center;
-            margin-top: 50px;
-            font-family: Arial, sans-serif;
-        }
+body {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px; /* Reduzido para evitar fontes gigantes */
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    line-height: 1.5;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
 
-        .export-page .table thead th,
-        .export-page .table th {
-            background-color: #0056b3;
-            color: #fff;
-        }
+/* NAVBAR MODERNA */
+.navbar {
+    background: linear-gradient(135deg, var(--michelin-blue-dark), var(--michelin-blue));
+    border-bottom: 4px solid var(--michelin-yellow);
+    box-shadow: var(--shadow-sm);
+    padding: 1rem 2rem;
+}
 
-        .export-page .table tbody tr:nth-child(odd) {
-            background-color: #f2f2f2;
-        }
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--michelin-yellow) !important;
+    letter-spacing: 0.5px;
+}
 
-        .export-page .table tbody tr:nth-child(even) {
-            background-color: #e6e6e6;
-        }
+.nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 600;
+    padding: 0.5rem 1rem !important;
+    margin: 0 0.25rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
 
-        .export-page .table tbody tr:hover {
-            background-color: #ffcc00;
-        }
+.nav-link:hover {
+    color: var(--michelin-blue-dark) !important;
+    background-color: var(--michelin-yellow);
+    transform: translateY(-2px);
+}
 
-        .export-page h2 {
-            color: #0056b3;
-            margin-bottom: 20px;
-        }
+.navbar-toggler {
+    border-color: var(--michelin-yellow);
+}
 
-        .export-page .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+.dropdown-menu {
+    background-color: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+}
 
-        .export-page .header img {
-            max-width: 200px;
-            height: auto;
-        }
+.dropdown-item {
+    font-weight: 500;
+    color: var(--text-main);
+    transition: all 0.2s;
+}
 
-        .export-page .header-img {
-            width: 300px;
-            height: auto;
-        }
+.dropdown-item:hover {
+    background-color: rgba(39, 80, 155, 0.1);
+    color: var(--michelin-blue);
+}
 
-        .export-page .text-center {
-            text-align: center;
-        }
+/* BOTÕES PREMIUM */
+.btn-primary, button[type="submit"] {
+    background: linear-gradient(135deg, var(--michelin-blue), var(--michelin-blue-dark));
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(39, 80, 155, 0.2);
+    transition: all 0.3s ease;
+}
 
-        .export-page .proximo-vencimento {
-            background-color: #FFFF00;
-        }
+.btn-primary:hover, button[type="submit"]:hover {
+    background: linear-gradient(135deg, var(--michelin-yellow), var(--michelin-yellow-hover));
+    color: var(--michelin-blue-dark);
+    box-shadow: 0 6px 12px rgba(252, 229, 0, 0.3);
+    transform: translateY(-2px);
+}
 
-        .export-page .vencido {
-            background-color: #FF0000;
-            color: #fff;
-        }
+/* INPUTS E FORMS */
+.form-control, select, textarea {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: var(--text-main);
+    font-size: 1rem;
+    height: auto !important; /* Corrige o corte de texto em <select> no Bootstrap */
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+}
 
-        .export-page .mb-10 {
-            margin-bottom: 30px;
-        }
+.form-control:focus, select:focus, textarea:focus {
+    border-color: var(--michelin-blue);
+    box-shadow: 0 0 0 3px rgba(39, 80, 155, 0.2);
+    outline: none;
+}
 
-        .export-page .footer {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            background-color: #f8f9fa;
-            text-align: center;
-            padding: 10px;
-            font-size: 0.8em;
-        }
+/* CONTAINERS E CARDS (GLASSMORPHISM) */
+.container {
+    max-width: 1200px;
+    width: 100%;
+    margin-right: auto;
+    margin-left: auto;
+    padding-right: 15px;
+    padding-left: 15px;
+}
 
-        .export-page table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
+.card, .message-box, .chart-container {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 1.25rem; /* Reduzido de 2rem para não distorcer no mobile */
+    margin-bottom: 1.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 
-        .export-page table, .export-page th, .export-page td {
-            border: 1px solid black;
-        }
+.card:hover, .chart-container:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
 
-        .export-page th, .export-page td {
-            padding: 10px;
-            text-align: left;
-        }
+.card-header {
+    background-color: transparent;
+    border-bottom: 2px solid var(--bg-color);
+    font-weight: 700;
+    color: var(--michelin-blue);
+}
 
-        .export-page th {
-            background-color: #f2f2f2;
-        }
+h2 {
+    color: var(--michelin-blue-dark);
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+}
 
-        .export-page .message-box {
-            background-color: #fff;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            display: inline-block;
-        }
+h3 {
+    color: var(--michelin-blue-dark);
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
 
-        .export-page a {
-            display: inline-block;
-            margin-top: 20px;
-            text-decoration: none;
-            color: #27509b;
-            font-weight: bold;
-        }
+/* TABELAS */
+.table {
+    background: white;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.table thead th {
+    background-color: var(--michelin-blue);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 1rem;
+}
+
+.table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(252, 229, 0, 0.1);
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 1rem;
+    border-top: 1px solid #edf2f7;
+}
+
+/* ALERTAS */
+.alert {
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+}
+
+.alert-success {
+    background-color: #def7ec;
+    color: #03543f;
+    border-left: 4px solid #31c48d;
+}
+
+.alert-info {
+    background-color: #e1effe;
+    color: #1e429f;
+    border-left: 4px solid #3f83f8;
+}
+
+.alert-warning {
+    background-color: #fdf6b2;
+    color: #723b13;
+    border-left: 4px solid #faca15;
+}
+
+/* FOOTER FIXO NA BASE */
+.footer {
+    margin-top: auto;
+    background-color: white;
+    padding: 1.5rem 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* UTILITÁRIOS DE ANIMAÇÃO */
+.fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ESTILOS DE EXPORTAÇÃO (Premium) */
+.export-page {
+    background-color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-main);
+}
+.export-page .header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+.export-page .header img, .export-page .header-img {
+    max-width: 120px; /* Logo Michelin reduzido */
+    margin-bottom: 1rem;
+}
+.export-page h2 {
+    color: var(--michelin-blue);
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+.export-page table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+    font-size: 12px;
+}
+.export-page th {
+    background-color: var(--michelin-blue);
+    color: #ffffff;
+    padding: 10px;
+    border: 1px solid var(--michelin-blue-dark);
+}
+.export-page td {
+    padding: 8px;
+    border: 1px solid #cbd5e0;
+}
+.export-page tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+}

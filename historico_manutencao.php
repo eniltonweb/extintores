@@ -32,7 +32,7 @@ $conn->close();
     <script src="js/chart_utils.js"></script>
 </head>
 <body>
-<?php include "templates/header1.php"; ?>
+<?php include 'templates/header_controller.php'; ?>
 <div class="container mt-4">
     <h2>Histórico de Manutenções</h2>
 

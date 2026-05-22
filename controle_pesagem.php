@@ -19,19 +19,7 @@ if (!isset($_SESSION['user_id'])){
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #003b80;">
-  <a class="navbar-brand" href="#">Michelin</a>
-  <div class="collapse navbar-collapse">
-    <ul class="navbar-nav mr-auto">
-      <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
-      <li class="nav-item"><a class="nav-link" href="extintores.php">Extintores</a></li>
-      <li class="nav-item"><a class="nav-link" href="inspecoes.php">Inspeções</a></li>
-      <li class="nav-item active"><a class="nav-link" href="controle_pesagem.php">Pesagem CO₂</a></li>
-      <li class="nav-item"><a class="nav-link" href="usuarios.php">Usuários</a></li>
-      <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
-    </ul>
-  </div>
-</nav>
+<?php include 'templates/header_controller.php'; ?>
 
 <div class="container mt-4">
   <h4>Histórico de Pesagens</h4>

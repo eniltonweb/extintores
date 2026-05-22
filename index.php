@@ -45,21 +45,34 @@ $conn->close();
 </head>
 <body>
     <?php
-    // Incluir o cabeçalho correto com base no nível de usuário
-    if ($user_level == 'admin') {
-        include '/templates/header1.php';
-    } elseif ($user_level == 'bombeiro') {
-        include '/templates/header2.php';
-    } elseif ($user_level == 'fornecedor') {
-        include '/templates/header3.php';
-    } else {
-        include '/templates/header.php';
-    }
+    // Incluir o cabeçalho dinâmico centralizado
+    include 'templates/header_controller.php';
     ?>
-    <div class="container mt-4">
-        <h2>Bem-vindo ao Sistema de Controle e Manutenção de Extintores</h2>
-        <p>Utilize o menu acima para navegar pelo sistema.</p>
-        <p id="user-greeting"></p>
+    <div class="container mt-5 fade-in">
+        <div class="card border-0 text-center py-5">
+            <h2 class="font-weight-bold mb-3" style="color: var(--michelin-blue-dark);">Bem-vindo ao Sistema de Controle de Extintores</h2>
+            <p class="lead text-muted mb-4">Gerencie as inspeções e manutenções com eficiência e segurança.</p>
+            <div class="p-3 mb-2 bg-light rounded shadow-sm d-inline-block">
+                <p id="user-greeting" class="m-0 font-weight-bold" style="color: var(--michelin-blue); font-size: 1.2rem;"></p>
+            </div>
+            
+            <div class="mt-5 row justify-content-center">
+                <div class="col-md-4 mb-3">
+                    <div class="p-4 border rounded shadow-sm" style="background: rgba(39, 80, 155, 0.05);">
+                        <h4 style="color: var(--michelin-blue);">Inspeções</h4>
+                        <p class="text-muted small">Acesso rápido para registro de campo.</p>
+                        <a href="formulario_inspecao.php" class="btn btn-primary btn-sm mt-2">Acessar</a>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="p-4 border rounded shadow-sm" style="background: rgba(252, 229, 0, 0.1);">
+                        <h4 style="color: var(--michelin-blue-dark);">Dashboard</h4>
+                        <p class="text-muted small">Visualize métricas e andamento.</p>
+                        <a href="dashboard.php" class="btn btn-primary btn-sm mt-2">Visualizar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <footer class="footer mt-4">
     <div class="container text-center">

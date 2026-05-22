@@ -18,7 +18,19 @@
  * ============================================================
  */
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+ini_set('memory_limit', '512M'); // Já aproveita para aumentar a memória
+set_time_limit(300); // Dá mais tempo para o servidor processar as fotos
+
+
 session_start();
+
+if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] !== 'admin') {
+    header('Location: index.php');
+    exit();
+}
 require_once __DIR__ . '/config/db_conexao.php';
 require_once __DIR__ . '/vendor/autoload.php';
 include_once __DIR__ . '/auditoria.php';
@@ -270,12 +282,22 @@ ob_start();
 
 <!-- CABEÇALHO -->
 <div class="header-box">
-  <h1>🔥 Relatório de Inspeção de Nível 1 — Extintores</h1>
-  <p>Período: <strong><?= htmlspecialchars($periodo_label) ?></strong>
-     &nbsp;|&nbsp; Prédio: <strong><?= htmlspecialchars($predio_label) ?></strong>
-     <?= $nok_label ? '&nbsp;|&nbsp; <strong>' . htmlspecialchars($nok_label) . '</strong>' : '' ?>
-  </p>
-  <p>Gerado em: <?= date('d/m/Y H:i') ?> &nbsp;|&nbsp; Total de registros: <strong><?= count($extintores) ?></strong></p>
+  <table style="width: 100%; border: none; margin: 0; padding: 0;">
+    <tr>
+      <td style="width: 15%; vertical-align: middle; text-align: center; border: none; padding-right: 15px;">
+        <img src="https://enilton.com.br/extintores2/img/michelin_logo.png" alt="Michelin" style="max-height: 45px; background: #ffffff; padding: 6px; border-radius: 4px;">
+      </td>
+      
+      <td style="width: 85%; vertical-align: middle; text-align: left; border: none;">
+        <h1> Relatório de Inspeção de Nível 1 — Extintores</h1>
+        <p>Período: <strong><?= htmlspecialchars($periodo_label) ?></strong>
+           &nbsp;|&nbsp; Prédio: <strong><?= htmlspecialchars($predio_label) ?></strong>
+           <?= $nok_label ? '&nbsp;|&nbsp; <strong>' . htmlspecialchars($nok_label) . '</strong>' : '' ?>
+        </p>
+        <p>Gerado em: <?= date('d/m/Y H:i') ?> &nbsp;|&nbsp; Total de registros: <strong><?= count($extintores) ?></strong></p>
+      </td>
+    </tr>
+  </table>
 </div>
 
 <?php if (empty($extintores)): ?>
@@ -305,10 +327,10 @@ ob_start();
 
   <!-- BARRA DE RESUMO -->
   <div class="resumo-bar">
-    <span>✅ Conformes: <strong><?= $total_ok ?></strong></span>
-    <span>❌ Não conformes: <strong style="color:#dc3545;"><?= $total_nok ?></strong></span>
-    <span>📋 Total inspecionado: <strong><?= count($extintores) ?></strong></span>
-  </div>
+  <span>&#10004; Conformes: <strong><?= $total_ok ?></strong></span>
+  <span>&#10006; Não conformes: <strong style="color:#dc3545;"><?= $total_nok ?></strong></span>
+  <span>Total inspecionado: <strong><?= count($extintores) ?></strong></span>
+</div>
 
   <?php foreach ($extintores as $ext):
     $fotos = buscar_fotos($conn, $ext['codigo'], $ext['data_inspecao']);
@@ -329,7 +351,7 @@ ob_start();
 
     <!-- Cabeçalho do extintor -->
     <div class="extintor-header" <?= $tem_nok ? 'style="background:#c0392b;"' : '' ?>>
-      <?= $tem_nok ? '⚠️ ' : '✅ ' ?>
+  <?= $tem_nok ? '&#9888; ' : '&#10004; ' ?>
       Extintor: <strong><?= htmlspecialchars($ext['codigo']) ?></strong>
       &nbsp;—&nbsp;
       Prédio <?= htmlspecialchars($ext['Predio']) ?>
@@ -386,15 +408,15 @@ ob_start();
       <?php if (!empty($ext['comentarios'])): ?>
         <div class="comentario-box">
           <?php if (strpos($ext['comentarios'], 'ALERTA GRAVE') !== false): ?>
-            <span class="alerta">⚠️ </span>
-          <?php endif; ?>
+  <span class="alerta">&#9888; </span>
+<?php endif; ?>
           <strong>Observações:</strong> <?= nl2br(htmlspecialchars($ext['comentarios'])) ?>
         </div>
       <?php endif; ?>
 
       <!-- Fotos / Evidências -->
       <div style="font-size:9px;font-weight:bold;color:#003087;margin-bottom:4px;">
-        📷 Evidências Fotográficas
+  Evidências Fotográficas
         <?= !empty($fotos) ? '(' . count($fotos) . ' foto' . (count($fotos) > 1 ? 's' : '') . ')' : '' ?>
       </div>
 
@@ -463,7 +485,7 @@ $mpdf = new \Mpdf\Mpdf([
 
 // Permitir imagens do filesystem local (essencial para as fotos)
 $mpdf->setBasePath(__DIR__);
-$mpdf->SetImportUse();
+// $mpdf->SetImportUse(); 
 
 // Rodapé com número de página
 $mpdf->SetFooter(

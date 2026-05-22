@@ -1,5 +1,10 @@
 <?php
 session_start();
+
+if (!isset($_SESSION['user_id']) || ($_SESSION['user_level'] !== 'admin' && $_SESSION['user_level'] !== 'fornecedor')) {
+    header('Location: index.php');
+    exit();
+}
 require_once __DIR__ . '/config/db_conexao.php'; // Inclui a conexão com o banco de dados
 
 // Verificar se o usuário está logado e tem permissão
@@ -76,9 +81,9 @@ $conn->close();
     <?php 
     // Inclui o header correto baseado no nível de usuário
     if ($_SESSION['user_level'] == 'admin') {
-        include '../templates/header1.php';
+        include 'templates/header_controller.php';
     } elseif ($_SESSION['user_level'] == 'fornecedor') {
-        include '../templates/header3.php';
+        include 'templates/header_controller.php';
     }
     ?>
     <div class="container mt-4">

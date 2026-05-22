@@ -15,13 +15,15 @@ if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) 
         exit();
     }
 
+// Requer autoload do Composer para mPDF
+require_once __DIR__ . '/vendor/autoload.php';
+
 // Nome do arquivo com data de exportação
 $data_exportacao = date('Y-m-d_H-i-s');
-$nome_arquivo = "extintores_$data_exportacao.html";
+$nome_arquivo = "extintores_$data_exportacao.pdf";
 
-// Cabeçalhos HTTP para download do arquivo HTML
-header('Content-Type: text/html; charset=utf-8');
-header('Content-Disposition: attachment; filename=' . $nome_arquivo);
+// Início do buffer HTML
+ob_start();
 
 // Início da exportação HTML
 echo '<!DOCTYPE html>
@@ -32,11 +34,29 @@ echo '<!DOCTYPE html>
     <title>Exportação de Extintores</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+
+    <style>
+        body.export-page { background-color: #ffffff; font-family: Inter, sans-serif; }
+        .export-page .header-img { max-width: 120px !important; margin-bottom: 1rem; }
+        .export-page h2 { color: #27509b; font-weight: 700; margin-bottom: 1.5rem; }
+        .export-page table { font-size: 12px; width: 100%; border-collapse: collapse; }
+        .export-page th { background-color: #27509b !important; color: #ffffff !important; padding: 10px; }
+        .export-page td { padding: 8px; border: 1px solid #cbd5e0; }
+        .export-page tbody tr:nth-child(even) { background-color: #f8fafc !important; }
+        /* Garantir impressão de cores de fundo (WebKit) */
+        @media print {
+            .export-page th { background-color: #27509b !important; -webkit-print-color-adjust: exact; color: #ffffff !important; }
+            .export-page tbody tr:nth-child(even) { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; }
+        }
+    </style>
 </head>
 <body class="export-page">
     <div class="container mt-5">
-        <h2 class="text-center">Listagem de Extintores</h2>
-        <table class="table table-bordered">
+        <div class="header">
+            <img src="img/michelin_logo2.png" alt="Michelin Logo" class="header-img" style="max-width: 150px; margin-bottom: 15px;">
+            <h2>Listagem de Extintores</h2>
+        </div>
+        <table class="table">
             <thead>
                 <tr>
                     <th>Prédio</th>
@@ -93,11 +113,20 @@ echo '        </tbody>
 
     // Registrar a auditoria
     $user_id = $_SESSION['user_id'];
-    $action = 'Exportação de dados';
+    $action = 'Exportação de dados em PDF';
     $details = 'Exportação de dados dos extintores realizada em ' . date('Y-m-d H:i:s');
     registrar_auditoria($conn, $user_id, $action, $details);
 
     $conn->close();
+
+    $html = ob_get_clean();
+
+    // Gerar PDF com mPDF (Landscape para caber as colunas)
+    $mpdf = new \Mpdf\Mpdf(['orientation' => 'L', 'format' => 'A4', 'tempDir' => sys_get_temp_dir() . '/mpdf']);
+    $mpdf->setBasePath(__DIR__);
+    $mpdf->WriteHTML($html);
+    $mpdf->Output($nome_arquivo, \Mpdf\Output\Destination::DOWNLOAD);
+
     exit();
 }
 ?>

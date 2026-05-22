@@ -39,13 +39,13 @@ $result_extintores = $conn->query($sql_extintores);
     <?php
     // Incluir o cabeçalho correto com base no nível de usuário
     if ($user_level == 'admin') {
-        include '../templates/header1.php';
+        include 'templates/header_controller.php';
     } elseif ($user_level == 'bombeiro') {
-        include '../templates/header2.php';
+        include 'templates/header_controller.php';
     } elseif ($user_level == 'fornecedor') {
-        include '../templates/header3.php';
+        include 'templates/header_controller.php';
     } else {
-        include '../templates/header.php';
+        include 'templates/header_controller.php';
     }
     ?>
 <div class="container mt-4">

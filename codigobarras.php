@@ -5,15 +5,15 @@ include 'auditoria.php';
 
 $error_message = null;
 
-if (!isset($_GET['codigo'])) {
-    $error_message = 'Código de barras não fornecido.';
-    error_log('codigobarras.php erro: ' . $error_message);
-} else {
+$codigo = null;
+
+if (isset($_GET['codigo']) && !empty(trim($_GET['codigo']))) {
     $codigo = htmlspecialchars($_GET['codigo']);
     if (!preg_match('/^[a-zA-Z0-9\-]+$/', $codigo)) {
         $error_message = 'Código inválido.';
         $sanitized_input = str_replace(array("\r", "\n"), '', $_GET['codigo']);
         error_log('codigobarras.php erro: ' . $error_message . ' | Input: ' . $sanitized_input);
+        $codigo = null;
     }
 }
 
@@ -27,7 +27,7 @@ header('X-Frame-Options: SAMEORIGIN');
 
 // Consulta para obter as informações do extintor e o nome do usuário que fez a última inspeção de nível 1
 $result = null;
-if (!isset($error_message)) {
+if ($codigo !== null && !isset($error_message)) {
     $sql = "
         SELECT e.*,
                e.usuario AS usuario_inspecao_nivel1,
@@ -73,18 +73,29 @@ if (!isset($error_message)) {
 <?php
 // Incluir o cabeçalho correto com base no nível de usuário
 if ($user_level == 'admin') {
-    include '../templates/header1.php';
+    include 'templates/header_controller.php';
 } elseif ($user_level == 'bombeiro') {
-    include '../templates/header2.php';
+    include 'templates/header_controller.php';
 } elseif ($user_level == 'fornecedor') {
-    include '../templates/header3.php';
+    include 'templates/header_controller.php';
 } else {
-    include '../templates/header.php';
+    include 'templates/header_controller.php';
 }
 ?>
 <div class="container mt-4">
 <?php
-if (isset($error_message)) {
+if ($codigo === null && !isset($error_message)) {
+    echo '<div class="card fade-in text-center" style="max-width: 500px; margin: 0 auto;">
+            <h3>Consultar Extintor</h3>
+            <p class="text-muted">Informe o código do extintor para ver os detalhes.</p>
+            <form method="GET" action="codigobarras.php">
+                <div class="form-group">
+                    <input type="text" name="codigo" class="form-control" placeholder="Ex: EXT-12345" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Buscar</button>
+            </form>
+          </div>';
+} elseif (isset($error_message)) {
     echo "<div class='alert alert-danger'>" . htmlspecialchars($error_message) . "</div>";
 } elseif ($result) {
     if ($result->num_rows > 0) {
@@ -140,7 +151,7 @@ if (isset($error_message)) {
         <p><strong>Foto:</strong>
             <?php
             if (!empty($extintor['foto'])) {
-                echo '<img src="../uploads/' . htmlspecialchars($extintor['foto']) . '" alt="Foto do Extintor" class="extintor-img">';
+                echo '<img src="uploads/' . htmlspecialchars($extintor['foto']) . '" alt="Foto do Extintor" class="extintor-img">';
             } else {
                 echo 'Nenhuma foto disponível';
             }

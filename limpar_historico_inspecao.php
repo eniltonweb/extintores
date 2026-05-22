@@ -44,6 +44,11 @@ if (!function_exists('limpar_historico_inspecao_logic')) {
 
 if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === realpath(__FILE__)) {
     session_start();
+
+if (!isset($_SESSION['user_id']) || $_SESSION['user_level'] !== 'admin') {
+    header('Location: index.php');
+    exit();
+}
     require_once __DIR__ . '/config/db_conexao.php';
     include 'auditoria.php';
 
