@@ -1,20 +1,26 @@
 <?php
 declare(strict_types=1);
 
-// Carrega configuração do ambiente; valores de fallback são definidos apenas
-// para desenvolvimento local. Em produção, configure DB_HOST, DB_USER, DB_PASS
-// e DB_NAME no ambiente.
-$dbHost = getenv('DB_HOST') ?: 'localhost';
-$dbUser = getenv('DB_USER') ?: 'usuario';
-$dbPass = getenv('DB_PASS') ?: '';
-$dbName = getenv('DB_NAME') ?: 'extintores';
+// Configuração direta de conexão ao banco de dados
+$dbHost = 'eniltonbd.mysql.dbaas.com.br';
+$dbUser = 'eniltonbd';
+$dbPass = 'Nil2024#';
+$dbName = 'eniltonbd';        
 
 try {
     $conn = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+    
+    // Verifica se houve erro na conexão
+    if ($conn->connect_error) {
+        throw new mysqli_sql_exception('Falha na conexão: ' . $conn->connect_error);
+    }
+    
     $conn->set_charset('utf8');
 } catch (mysqli_sql_exception $e) {
     error_log('Erro de conexão com o banco: ' . $e->getMessage());
     http_response_code(500);
+    // Em caso de erro persistente, descomente a linha abaixo para ver o erro no navegador:
+    // die('ERRO DE CONEXÃO: ' . $e->getMessage());
     throw new Exception('Não foi possível conectar ao banco de dados.', 0, $e);
 }
 
@@ -42,3 +48,4 @@ if (!function_exists('execute_stmt')) {
         return $result;
     }
 }
+?>
