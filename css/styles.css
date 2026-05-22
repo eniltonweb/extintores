@@ -1,162 +1,79 @@
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
-        }
-        .navbar {
-            background: linear-gradient(45deg, #001f3f, #27509b);
-            border-bottom: 3px solid #fce500;
-        }
-        .navbar-brand {
-            font-size: 1.5rem;
-            color: #fce500 !important;
-        }
-        .nav-link {
-            color: #ffffff !important;
-            transition: color 0.3s ease-in-out, transform 0.3s ease-in-out;
-        }
-        .nav-link:hover {
-            color: #fce500 !important;
-            transform: scale(1.1);
-        }
-        .navbar-toggler {
-            border-color: #fce500;
-        }
-        .navbar-toggler-icon {
-            background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%25255, 229, 0, 0.7%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
-        }
-        .dropdown-menu {
-            background-color: #27509b;
-            border: none;
-        }
-        .dropdown-item {
-            color: #ffffff;
-            transition: background-color 0.3s ease-in-out;
-        }
-        .dropdown-item:hover {
-            background-color: #fce500;
-            color: #000000;
-        }
-        .nav-item {
-            margin-right: 10px;
-        }
-        .navbar-nav.ml-auto {
-            margin-left: auto;
-        }
-        .navbar-collapse {
-            flex-grow: 1;
-            justify-content: space-between;
-        }
+/* styles.css */
 
-        /* Estilos para páginas de exportação */
-        .export-page {
-            background-color: #f8f9fa;
-            color: #000;
-        }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #ffffff;
+    color: #1b1e21;
+}
 
-        .export-page.no-data {
-            background-color: #f0f0f0;
-            text-align: center;
-            margin-top: 50px;
-            font-family: Arial, sans-serif;
-        }
+.navbar-brand {
+    font-size: 1.5rem;
+    color: #fce500 !important;
+    display: flex;
+    align-items: center;
+}
 
-        .export-page .table thead th,
-        .export-page .table th {
-            background-color: #0056b3;
-            color: #fff;
-        }
+.img-logo {
+    max-height: 50px;
+    margin-right: 10px;
+}
 
-        .export-page .table tbody tr:nth-child(odd) {
-            background-color: #f2f2f2;
-        }
+.navbar {
+    background: linear-gradient(45deg, #001f3f, #27509b);
+    border-bottom: 3px solid #fce500;
+    justify-content: center;
+}
 
-        .export-page .table tbody tr:nth-child(even) {
-            background-color: #e6e6e6;
-        }
+.detalhes-extintor {
+    text-align: center;
+    margin-bottom: 20px;
+}
 
-        .export-page .table tbody tr:hover {
-            background-color: #ffcc00;
-        }
+.nav-link {
+    color: #ffffff !important;
+    transition: color 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
 
-        .export-page h2 {
-            color: #0056b3;
-            margin-bottom: 20px;
-        }
+.nav-link:hover {
+    color: #fce500 !important;
+    transform: scale(1.1);
+}
 
-        .export-page .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+.navbar-toggler {
+    border-color: #fce500;
+}
 
-        .export-page .header img {
-            max-width: 200px;
-            height: auto;
-        }
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%255, 229, 0, 0.7%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
 
-        .export-page .header-img {
-            width: 300px;
-            height: auto;
-        }
+.dropdown-menu {
+    background-color: #27509b;
+    border: none;
+}
 
-        .export-page .text-center {
-            text-align: center;
-        }
+.dropdown-item {
+    color: #ffffff;
+    transition: background-color 0.3s ease-in-out;
+}
 
-        .export-page .proximo-vencimento {
-            background-color: #FFFF00;
-        }
+.dropdown-item:hover {
+    background-color: #fce500;
+    color: #000000;
+}
 
-        .export-page .vencido {
-            background-color: #FF0000;
-            color: #fff;
-        }
+.extintor-img {
+    max-width: 200px;
+    max-height: 200px;
+    border: 2px solid #001f3f;
+    border-radius: 10px;
+    margin-top: 10px;
+}
 
-        .export-page .mb-10 {
-            margin-bottom: 30px;
-        }
-
-        .export-page .footer {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            background-color: #f8f9fa;
-            text-align: center;
-            padding: 10px;
-            font-size: 0.8em;
-        }
-
-        .export-page table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-
-        .export-page table, .export-page th, .export-page td {
-            border: 1px solid black;
-        }
-
-        .export-page th, .export-page td {
-            padding: 10px;
-            text-align: left;
-        }
-
-        .export-page th {
-            background-color: #f2f2f2;
-        }
-
-        .export-page .message-box {
-            background-color: #fff;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            display: inline-block;
-        }
-
-        .export-page a {
-            display: inline-block;
-            margin-top: 20px;
-            text-decoration: none;
-            color: #27509b;
-            font-weight: bold;
-        }
+.footer {
+    background-color: #003580;
+    color: #ffffff;
+    padding: 10px 0;
+    border-top: 3px solid #fce500;
+    border-bottom: 3px solid #fce500;
+}
