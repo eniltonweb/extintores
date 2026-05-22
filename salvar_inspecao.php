@@ -152,7 +152,10 @@ $legendas_raw = isset($_POST['legendas']) && is_array($_POST['legendas'])
 // -------------------------------------------------------
 // Upload das fotos (múltiplas)
 // -------------------------------------------------------
-$uploads_dir    = __DIR__ . '/../uploads/';
+$uploads_dir    = __DIR__ . '/uploads/';
+if (!is_dir($uploads_dir)) {
+    mkdir($uploads_dir, 0755, true);
+}
 $fotos_salvas   = []; // array de nomes de arquivo salvos
 $primeira_foto  = null;
 
