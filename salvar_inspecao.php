@@ -156,6 +156,7 @@ $uploads_dir    = __DIR__ . '/uploads/';
 if (!is_dir($uploads_dir)) {
     mkdir($uploads_dir, 0755, true);
 }
+
 $fotos_salvas   = []; // array de nomes de arquivo salvos
 $primeira_foto  = null;
 
@@ -172,7 +173,7 @@ if (isset($_FILES['fotos']) && is_array($_FILES['fotos']['name'])) {
         if ($nome !== null) {
             $fotos_salvas[] = $nome;
             if ($primeira_foto === null) {
-                $primeira_foto = $nome; // retrocompatibilidade
+                $primeira_foto = $nome;
             }
             $count++;
         }

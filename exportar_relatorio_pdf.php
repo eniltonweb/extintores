@@ -55,7 +55,7 @@ $apenas_nok      = filter_input(INPUT_GET, 'apenas_nok',FILTER_VALIDATE_BOOLEAN)
 if (empty($filtro_de))  $filtro_de  = date('Y-m-01');          // início do mês atual
 if (empty($filtro_ate)) $filtro_ate = date('Y-m-d');            // hoje
 
-$uploads_dir = realpath(__DIR__ . '/../uploads') . DIRECTORY_SEPARATOR;
+$uploads_dir = __DIR__ . '/uploads/';
 
 // -------------------------------------------------------
 // Busca dos dados de inspeção
@@ -426,7 +426,12 @@ ob_start();
         <div class="foto-grid">
           <?php foreach ($fotos as $foto):
             $path_foto = $uploads_dir . basename($foto['foto_nome']);
-            $img_src   = file_exists($path_foto) ? $path_foto : null;
+            $img_src   = null;
+            if (file_exists($path_foto)) {
+                $img_ext = pathinfo($path_foto, PATHINFO_EXTENSION);
+                $img_data = base64_encode(file_get_contents($path_foto));
+                $img_src = 'data:image/' . $img_ext . ';base64,' . $img_data;
+            }
           ?>
           <div class="foto-cell">
             <?php if ($img_src): ?>
@@ -484,8 +489,8 @@ $mpdf = new \Mpdf\Mpdf([
 ]);
 
 // Permitir imagens do filesystem local (essencial para as fotos)
-$mpdf->setBasePath(__DIR__);
-// $mpdf->SetImportUse(); 
+$mpdf->setBasePath(__DIR__ . '/');
+$mpdf->allow_output_buffering = true;
 
 // Rodapé com número de página
 $mpdf->SetFooter(

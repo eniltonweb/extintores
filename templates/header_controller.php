@@ -41,9 +41,10 @@ $user_level = $_SESSION['user_level'] ?? '';
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarExportacao" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Exportação</a>
                     <div class="dropdown-menu shadow-sm" aria-labelledby="navbarExportacao">
-                        <a class="dropdown-item" href="exportar_dados.php">Exportar Dados (PDF)</a>
+                        <a class="dropdown-item" href="exportar_dados.php">Exportar Dados (Excel)</a>
                         <a class="dropdown-item" href="exportar_relatorio_pdf.php">Gerar PDF</a>
-                        <a class="dropdown-item" href="codigobarras.php">Código de Barras</a>
+                        <a class="dropdown-item" href="gerar_etiquetas.php">Gerar Etiquetas QR Code</a>
+                        <a class="dropdown-item" href="codigobarras.php">Leitor de QR Code</a>
                     </div>
                 </li>
                 <li class="nav-item dropdown">

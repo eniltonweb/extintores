@@ -159,12 +159,13 @@ if ($codigo === null && !isset($error_message)) {
         </p>
         <?php endif; ?>
 
-        <?php if ($user_level == 'bombeiro' && $liberado_inspecao): ?>
-            <p><a href="formulario_inspecao.php?predio=<?php echo htmlspecialchars($extintor['Predio']); ?>&codigo=<?php echo $codigo; ?>" class="btn btn-primary">Realizar Inspeção de Nível 1</a></p>
+        <?php if ($user_level == 'bombeiro'): ?>
+            <p><a href="formulario_inspecao.php?predio=<?php echo urlencode($extintor['Predio']); ?>&codigo=<?php echo urlencode($codigo); ?>" class="btn btn-primary w-100 mb-2">✅ Realizar Inspeção Mensal (N1)</a></p>
+            <p><a href="controle_pesagem.php" class="btn btn-info w-100">⚖️ Registrar Pesagem de CO₂</a></p>
         <?php endif; ?>
 
-        <?php if ($user_level == 'fornecedor' && $liberado_manutencao): ?>
-            <p><a href="formulario_manutencao.php?codigo=<?php echo $codigo; ?>" class="btn btn-primary">Realizar Manutenção de Nível 2</a></p>
+        <?php if ($user_level == 'fornecedor'): ?>
+            <p><a href="formulario_manutencao.php?codigo=<?php echo urlencode($codigo); ?>" class="btn btn-warning w-100 mb-2">🔧 Realizar Manutenção Anual (N2/N3)</a></p>
         <?php endif; ?>
         <?php
     } else {
